@@ -576,7 +576,7 @@ function parseFile(file) {
       const parsed = platformParse[platform](rawRows, file.name);
       uploadParsed.push({ platform, file: file.name, rows: parsed });
       renderParsedCard(platform, file.name, parsed, uploadParsed.length - 1);
-      showUploadStatus('ok', `${file.name} — ${platform} 감지 · ${parsed.length}행 파싱 완료`);
+      showUploadStatus('ok', `${file.name} — ${PLATFORM_LABELS[platform]} 감지 · ${parsed.length}행 파싱 완료`);
     } catch(err) {
       showUploadStatus('err', `${file.name} 파싱 오류: ${err.message}`);
     }

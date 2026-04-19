@@ -380,7 +380,9 @@ function nav(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  event.target.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(function(t){
+    if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+id+"'")>-1)t.classList.add('active');
+  });
 }
 
 // ══ 구분 선택 ══
@@ -590,13 +592,10 @@ function detectPlatform(rows, filename) {
   if (!rows.length) return 'unknown';
   const cols = Object.keys(rows[0]).join(' ');
   const fn = filename.toLowerCase();
-  
   if (cols.includes('캠페인 이름') || cols.includes('광고 세트') || cols.includes('지출 금액')) return 'meta';
   if (cols.includes('캠페인유형') || cols.includes('파워링크') || fn.includes('계정_보고서')) return 'naver';
   if (fn.includes('musinsa') || fn.includes('무신사')) return 'musinsa';
-  // 29CM 감지 로직 완성
-  if (cols.includes('집행 광고비') || fn.includes('29cm')) return '29cm'; 
-  
+  if (cols.includes('집행 광고비') && (cols.includes('광고 수익률') || fn.includes('29cm'))) return '29cm';
   return 'unknown';
 }
 
@@ -1036,28 +1035,9 @@ function updateSummary(sheet) {
 
 function out(data) {
   return ContentService
-    </script>
-  <script>
-    window.addEventListener('DOMContentLoaded',function(){
-        window.nav=function(id){
-              document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-              document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
-              document.getElementById('page-'+id).classList.add('active');
-              document.querySelectorAll('.nav-tab').forEach(function(t){
-                      if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+id+"'")>-1)t.classList.add('active');
-              });
-        };
-        var od=window.detectPlatform;
-        window.detectPlatform=function(rows,filename){
-              var fn=filename.toLowerCase();
-              if(fn.indexOf('musinsa')>-1)return 'musinsa';
-              return od(rows,filename);
-        };
-    });
-  </script>
-  </script>
+    .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }`;
-</script<!-- v5 -->
+</script>
 </body>
 </html>

@@ -527,8 +527,8 @@ function collectManual() {
       매체명: document.getElementById(`media-${id}`)?.value || '',
       '시즌/프로모션': season, 캠페인명: document.getElementById(`camp-${id}`)?.value || '',
       광고비: ad, 노출수: im, 클릭수: cl,
-      CTR: cl&&im ? +(cl/im).toFixed(4) : 0,
-      전환수: cv, CVR: cv&&cl ? +(cv/cl).toFixed(4) : 0,
+      '클릭률(CTR)': cl&&im ? +(cl/im).toFixed(4) : 0,
+      전환수: cv, '전환율(CVR)': cv&&cl ? +(cv/cl).toFixed(4) : 0,
       매출: sa, ROAS: ad&&sa ? +(sa/ad).toFixed(2) : 0,
       인사이트: note,
     });
@@ -670,8 +670,8 @@ function makeRow(date, div, media, camp, ad, imp, click, conv, sales) {
     구분: div, 매체명: media,
     '시즌/프로모션': '', 캠페인명: camp,
     광고비: ad, 노출수: imp, 클릭수: click,
-    CTR: click&&imp ? +(click/imp).toFixed(4) : 0,
-    전환수: conv, CVR: conv&&click ? +(conv/click).toFixed(4) : 0,
+    '클릭률(CTR)': click&&imp ? +(click/imp).toFixed(4) : 0,
+    전환수: conv, '전환율(CVR)': conv&&click ? +(conv/click).toFixed(4) : 0,
     매출: sales, ROAS: ad&&sales ? +(sales/ad).toFixed(2) : 0,
     인사이트: '',
   };
@@ -869,17 +869,18 @@ function copyCode() {
 }
 
 // ══ APPS SCRIPT CODE ══
-const SCRIPT_CODE = `// LEVAR 광고 로우데이터 저장 · Apps Script
+const SCRIPT_CODE = `// LEVAR 광고 로우데이터 저장 · Apps Script v2
 const SHEET = '일별_로우데이터';
 const HDR = [
   '날짜','연도','월','주차','요일',
   '구분','매체명','시즌/프로모션','캠페인명',
-  '광고비','노출수','클릭수','CTR',
-  '전환수','CVR','매출','ROAS','인사이트','저장일시'
+  '광고비','노출수','클릭수','클릭률(CTR)',
+  '전환수','전환율(CVR)','매출','ROAS','인사이트','저장일시'
 ];
+const DATA_START_ROW = 6;
 
 function doGet(e) {
-  if (e && e.parameter.action === 'ping')
+  if (e && e.parameter && e.parameter.action === 'ping')
     return out({ ok: true });
   return out({ ok: true });
 }
@@ -899,18 +900,71 @@ function appendRows(rows) {
   let sheet = ss.getSheetByName(SHEET);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET);
-    const h = sheet.getRange(1, 1, 1, HDR.length);
-    h.setValues([HDR]);
-    h.setBackground('#1A1A18').setFontColor('#FFFFFF').setFontWeight('bold');
-    sheet.setFrozenRows(1);
+    initSheet(sheet);
   }
   const now = new Date().toLocaleString('ko-KR');
-  const data = rows.map(r =>
+  const newData = rows.map(r =>
     HDR.slice(0,-1).map(k => (r[k] !== undefined && r[k] !== '') ? r[k] : '-')
        .concat([now])
   );
-  sheet.getRange(sheet.getLastRow()+1, 1, data.length, HDR.length).setValues(data);
-  return out({ ok: true, added: data.length });
+  const lastRow = sheet.getLastRow();
+  let allData = [];
+  if (lastRow >= DATA_START_ROW) {
+    allData = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HDR.length).getValues();
+  }
+  allData = allData.concat(newData);
+  allData.sort((a, b) => {
+    const da = String(a[0]), db = String(b[0]);
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+  if (lastRow >= DATA_START_ROW) {
+    sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HDR.length).clearContent();
+  }
+  if (allData.length > 0) {
+    sheet.getRange(DATA_START_ROW, 1, allData.length, HDR.length).setValues(allData);
+  }
+  updateSummary(sheet);
+  return out({ ok: true, added: newData.length });
+}
+
+function initSheet(sheet) {
+  sheet.getRange(1, 1, 1, HDR.length).merge();
+  sheet.getRange(1, 1).setValue('[LEVAR] 매체별 광고 성과 마스터 데이터');
+  sheet.getRange(1, 1).setBackground('#1A1A18').setFontColor('#FFFFFF')
+    .setFontWeight('bold').setFontSize(13).setHorizontalAlignment('left');
+  sheet.setRowHeight(1, 40);
+  sheet.getRange(2, 7).setValue('총 광고비');
+  sheet.getRange(2, 8).setValue('총 매출');
+  sheet.getRange(2, 9).setValue('평균 ROAS');
+  sheet.getRange(2, 10).setValue('평균 전환율(CVR)');
+  sheet.getRange(2, 7, 1, 4).setBackground('#F5F4EF').setFontWeight('bold')
+    .setFontSize(10).setHorizontalAlignment('center');
+  sheet.setRowHeight(2, 24);
+  sheet.setRowHeight(3, 28);
+  sheet.setRowHeight(4, 10);
+  sheet.getRange(5, 1, 1, HDR.length).setValues([HDR]);
+  sheet.getRange(5, 1, 1, HDR.length).setBackground('#1A1A18').setFontColor('#FFFFFF')
+    .setFontWeight('bold').setFontSize(10).setHorizontalAlignment('center');
+  sheet.setRowHeight(5, 24);
+  sheet.setFrozenRows(5);
+  [110,55,40,45,40,130,80,110,160,90,80,70,90,70,90,90,70,160,130]
+    .forEach((w,i) => sheet.setColumnWidth(i+1, w));
+}
+
+function updateSummary(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < DATA_START_ROW) return;
+  sheet.getRange(3, 7).setFormula('=SUMIF(J' + DATA_START_ROW + ':J' + lastRow + ',"<>-",J' + DATA_START_ROW + ':J' + lastRow + ')');
+  sheet.getRange(3, 8).setFormula('=SUMIF(P' + DATA_START_ROW + ':P' + lastRow + ',"<>-",P' + DATA_START_ROW + ':P' + lastRow + ')');
+  sheet.getRange(3, 9).setFormula('=IFERROR(G3/H3*100,0)');
+  sheet.getRange(3, 10).setFormula('=IFERROR(AVERAGEIF(O' + DATA_START_ROW + ':O' + lastRow + ',"<>-",O' + DATA_START_ROW + ':O' + lastRow + ')*100,0)');
+  sheet.getRange(3, 7).setNumberFormat('#,##0');
+  sheet.getRange(3, 8).setNumberFormat('#,##0');
+  sheet.getRange(3, 9).setNumberFormat('0.00"%"');
+  sheet.getRange(3, 10).setNumberFormat('0.00"%"');
+  sheet.getRange(3, 7, 1, 4).setBackground('#FFFFFF').setFontSize(12)
+    .setFontWeight('bold').setHorizontalAlignment('center')
+    .setBorder(true,true,true,true,true,true,'#DDDDDD',SpreadsheetApp.BorderStyle.SOLID);
 }
 
 function out(data) {

@@ -573,7 +573,7 @@ function parseFile(file) {
         rawRows = XLSX.utils.sheet_to_json(ws);
       }
       const platform = detectPlatform(rawRows, file.name);
-      const parsed = platformParse[platform](rawRows);
+      const parsed = platformParse[platform](rawRows, file.name);
       uploadParsed.push({ platform, file: file.name, rows: parsed });
       renderParsedCard(platform, file.name, parsed, uploadParsed.length - 1);
       showUploadStatus('ok', `${file.name} — ${platform} 감지 · ${parsed.length}행 파싱 완료`);
@@ -636,34 +636,54 @@ const platformParse = {
     return Object.values(byDateCamp).map(r => makeRow(r.date, '자사몰(네이버SA)', '네이버', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
   },
 
-  // 29CM 일별: 날짜 합산 (캠페인 없음)
-  '29cm'(rows) {
+  // 29CM: 캠페인별(하루치) or 일별 모두 지원
+  '29cm'(rows, filename) {
+    // 캠페인별 파일 (날짜 없음 → 파일명에서 추출)
+    if (!rows[0] || !rows[0]['날짜']) {
+      const date = extractDateFromFilename(filename);
+      return rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0).map(r => {
+        return makeRow(date, '입점몰(성장솔루션)', '29CM',
+          r['캠페인']||'',
+          parseNum(r['집행 광고비']), parseNum(r['노출 수']),
+          parseNum(r['클릭 수']), parseNum(r['판매 수']), parseNum(r['매출']));
+      });
+    }
+    // 일별 파일 (날짜 있음 → 합산)
     return rows.filter(r => r['날짜']).map(r => {
       const date = String(r['날짜']).slice(0,10);
-      const ad = parseNum(r['집행 광고비']);
-      const sa = parseNum(r['매출']);
-      const im = parseNum(r['노출 수']);
-      const cl = parseNum(r['클릭 수']);
-      const cv = parseNum(r['판매 수']);
-      return makeRow(date, '입점몰(성장솔루션)', '29CM', '', ad, im, cl, cv, sa);
+      return makeRow(date, '입점몰(성장솔루션)', '29CM', '',
+        parseNum(r['집행 광고비']), parseNum(r['노출 수']),
+        parseNum(r['클릭 수']), parseNum(r['판매 수']), parseNum(r['매출']));
     });
   },
 
   // 무신사: 29CM과 동일 구조
-  musinsa(rows) {
+  musinsa(rows, filename) {
+    if (!rows[0] || !rows[0]['날짜']) {
+      const date = extractDateFromFilename(filename);
+      return rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0).map(r => {
+        return makeRow(date, '입점몰(성장솔루션)', '무신사',
+          r['캠페인']||'',
+          parseNum(r['집행 광고비']), parseNum(r['노출 수']),
+          parseNum(r['클릭 수']), parseNum(r['판매 수']), parseNum(r['매출']));
+      });
+    }
     return rows.filter(r => r['날짜']).map(r => {
       const date = String(r['날짜']).slice(0,10);
-      const ad = parseNum(r['집행 광고비']);
-      const sa = parseNum(r['매출']);
-      const im = parseNum(r['노출 수']);
-      const cl = parseNum(r['클릭 수']);
-      const cv = parseNum(r['판매 수']);
-      return makeRow(date, '입점몰(성장솔루션)', '무신사', '', ad, im, cl, cv, sa);
+      return makeRow(date, '입점몰(성장솔루션)', '무신사', '',
+        parseNum(r['집행 광고비']), parseNum(r['노출 수']),
+        parseNum(r['클릭 수']), parseNum(r['판매 수']), parseNum(r['매출']));
     });
   },
 
   unknown(rows) { return []; },
 };
+
+function extractDateFromFilename(filename) {
+  const m = filename.match(/(\d{4})년_(\d{1,2})월_(\d{1,2})일/);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  return new Date().toISOString().slice(0,10);
+}
 
 function makeRow(date, div, media, camp, ad, imp, click, conv, sales) {
   const d = new Date(date);

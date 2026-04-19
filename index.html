@@ -680,7 +680,8 @@ const platformParse = {
 };
 
 function extractDateFromFilename(filename) {
-  const m = filename.match(/(\d{4})년_(\d{1,2})월_(\d{1,2})일/);
+  // 언더스코어 또는 공백 모두 지원
+  const m = filename.match(/(\d{4})년[\s_]*(\d{1,2})월[\s_]*(\d{1,2})일/);
   if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
   return new Date().toISOString().slice(0,10);
 }
@@ -874,10 +875,11 @@ function parseCSV(text) {
   }).filter(r => Object.values(r).some(v=>v));
 }
 function fmtN(v) {
-  if (!v||v===0) return '—';
-  if (v>=1e8) return (v/1e8).toFixed(1)+'억';
-  if (v>=1e4) return Math.round(v/1e4).toLocaleString()+'만';
-  return Number(v).toLocaleString();
+  const n = parseNum(v);
+  if (!n||n===0) return '—';
+  if (n>=1e8) return (n/1e8).toFixed(1)+'억';
+  if (n>=1e4) return Math.round(n/1e4).toLocaleString()+'만';
+  return Number(n).toLocaleString();
 }
 
 // ══ TOAST ══

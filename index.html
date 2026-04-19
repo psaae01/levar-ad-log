@@ -682,8 +682,8 @@ const platformParse = {
 };
 
 function extractDateFromFilename(filename) {
-  // 언더스코어 또는 공백 모두 지원
-  const m = filename.match(/(\d{4})년[\s_]*(\d{1,2})월[\s_]*(\d{1,2})일/);
+  // 공백/언더스코어 모두 지원, 유니코드 플래그 사용
+  const m = filename.match(/(\d{4})년.{0,2}(\d{1,2})월.{0,2}(\d{1,2})일/);
   if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
   return new Date().toISOString().slice(0,10);
 }

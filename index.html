@@ -641,7 +641,8 @@ const platformParse = {
     // 캠페인별 파일 (날짜 없음 → 파일명에서 추출)
     if (!rows[0] || !rows[0]['날짜']) {
       const date = extractDateFromFilename(filename);
-      return rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0).map(r => {
+      const active = rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0);
+      return active.map(r => {
         return makeRow(date, '입점몰(성장솔루션)', '29CM',
           r['캠페인']||'',
           parseNum(r['집행 광고비']), parseNum(r['노출 수']),
@@ -661,7 +662,8 @@ const platformParse = {
   musinsa(rows, filename) {
     if (!rows[0] || !rows[0]['날짜']) {
       const date = extractDateFromFilename(filename);
-      return rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0).map(r => {
+      const activeMu = rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0);
+      return activeMu.map(r => {
         return makeRow(date, '입점몰(성장솔루션)', '무신사',
           r['캠페인']||'',
           parseNum(r['집행 광고비']), parseNum(r['노출 수']),

@@ -220,12 +220,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color:
       </div>
       <div class="fg">
         <label>시즌 / 프로모션</label>
-        <select id="m-season">
-          <option value="26SS">26SS</option>
-          <option value="25WINTER">25WINTER</option>
-          <option value="프로모션">프로모션</option>
-          <option value="이벤트">이벤트</option>
-        </select>
+        <input type="text" id="m-season" list="season-list" placeholder="예: 26SS, 25WINTER, 이벤트 등" autocomplete="off">
+        <datalist id="season-list">
+          <option value="26SS">
+          <option value="25WINTER">
+          <option value="프로모션">
+          <option value="이벤트">
+          <option value="26FW">
+          <option value="기타">
+        </datalist>
       </div>
       <div class="fg">
         <label>메모 (인사이트)</label>
@@ -895,6 +898,8 @@ function doPost(e) {
   }
 }
 
+// A=날짜 B=연도 C=월 D=주차 E=요일 F=구분 G=매체명 H=시즌 I=캠페인
+// J=광고비 K=노출수 L=클릭수 M=클릭률 N=전환수 O=전환율 P=매출 Q=ROAS R=인사이트 S=저장일시
 function appendRows(rows) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEET);
@@ -903,28 +908,28 @@ function appendRows(rows) {
     initSheet(sheet);
   }
   const now = new Date().toLocaleString('ko-KR');
-  const newData = rows.map(r =>
-    HDR.slice(0,-1).map(k => (r[k] !== undefined && r[k] !== '') ? r[k] : '-')
-       .concat([now])
-  );
   const lastRow = sheet.getLastRow();
-  let allData = [];
-  if (lastRow >= DATA_START_ROW) {
-    allData = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HDR.length).getValues();
-  }
-  allData = allData.concat(newData);
-  allData.sort((a, b) => {
-    const da = String(a[0]), db = String(b[0]);
-    return da < db ? -1 : da > db ? 1 : 0;
+  rows.forEach((r, i) => {
+    const row = lastRow + 1 + i;
+    const vals = [
+      r['날짜']||'-', r['연도']||'-', r['월']||'-', r['주차']||'-', r['요일']||'-',
+      r['구분']||'-', r['매체명']||'-', r['시즌/프로모션']||'-', r['캠페인명']||'-',
+      r['광고비']||0, r['노출수']||0, r['클릭수']||0, 0,
+      r['전환수']||0, 0, r['매출']||0, 0,
+      r['인사이트']||'-', now
+    ];
+    sheet.getRange(row, 1, 1, HDR.length).setValues([vals]);
+    sheet.getRange(row, 13).setFormula('=IFERROR(L' + row + '/K' + row + ',0)');
+    sheet.getRange(row, 15).setFormula('=IFERROR(N' + row + '/L' + row + ',0)');
+    sheet.getRange(row, 17).setFormula('=IFERROR(P' + row + '/J' + row + ',0)');
+    sheet.getRange(row, 10).setNumberFormat('#,##0');
+    sheet.getRange(row, 16).setNumberFormat('#,##0');
+    sheet.getRange(row, 13).setNumberFormat('0.00%');
+    sheet.getRange(row, 15).setNumberFormat('0.00%');
+    sheet.getRange(row, 17).setNumberFormat('0.00');
   });
-  if (lastRow >= DATA_START_ROW) {
-    sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, HDR.length).clearContent();
-  }
-  if (allData.length > 0) {
-    sheet.getRange(DATA_START_ROW, 1, allData.length, HDR.length).setValues(allData);
-  }
   updateSummary(sheet);
-  return out({ ok: true, added: newData.length });
+  return out({ ok: true, added: rows.length });
 }
 
 function initSheet(sheet) {

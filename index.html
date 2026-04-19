@@ -590,10 +590,13 @@ function detectPlatform(rows, filename) {
   if (!rows.length) return 'unknown';
   const cols = Object.keys(rows[0]).join(' ');
   const fn = filename.toLowerCase();
+  
   if (cols.includes('캠페인 이름') || cols.includes('광고 세트') || cols.includes('지출 금액')) return 'meta';
   if (cols.includes('캠페인유형') || cols.includes('파워링크') || fn.includes('계정_보고서')) return 'naver';
   if (fn.includes('musinsa') || fn.includes('무신사')) return 'musinsa';
-  if (cols.includes('집행 광고비') && ...
+  // 29CM 감지 로직 완성
+  if (cols.includes('집행 광고비') || fn.includes('29cm')) return '29cm'; 
+  
   return 'unknown';
 }
 

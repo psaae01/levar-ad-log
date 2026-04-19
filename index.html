@@ -959,17 +959,38 @@ function initSheet(sheet) {
 function updateSummary(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < DATA_START_ROW) return;
-  sheet.getRange(3, 7).setFormula('=SUMIF(J' + DATA_START_ROW + ':J' + lastRow + ',"<>-",J' + DATA_START_ROW + ':J' + lastRow + ')');
-  sheet.getRange(3, 8).setFormula('=SUMIF(P' + DATA_START_ROW + ':P' + lastRow + ',"<>-",P' + DATA_START_ROW + ':P' + lastRow + ')');
-  sheet.getRange(3, 9).setFormula('=IFERROR(G3/H3*100,0)');
-  sheet.getRange(3, 10).setFormula('=IFERROR(AVERAGEIF(O' + DATA_START_ROW + ':O' + lastRow + ',"<>-",O' + DATA_START_ROW + ':O' + lastRow + ')*100,0)');
+
+  // 상단 요약 수식
+  sheet.getRange(3, 7).setFormula('=SUMIF(J' + DATA_START_ROW + ':J1000,"<>-",J' + DATA_START_ROW + ':J1000)');
+  sheet.getRange(3, 8).setFormula('=SUMIF(P' + DATA_START_ROW + ':P1000,"<>-",P' + DATA_START_ROW + ':P1000)');
+  sheet.getRange(3, 9).setFormula('=IFERROR(G3/H3,0)');
+  sheet.getRange(3, 10).setFormula('=IFERROR(AVERAGEIF(O' + DATA_START_ROW + ':O1000,">0",O' + DATA_START_ROW + ':O1000),0)');
   sheet.getRange(3, 7).setNumberFormat('#,##0');
   sheet.getRange(3, 8).setNumberFormat('#,##0');
-  sheet.getRange(3, 9).setNumberFormat('0.00"%"');
-  sheet.getRange(3, 10).setNumberFormat('0.00"%"');
+  sheet.getRange(3, 9).setNumberFormat('0.00');
+  sheet.getRange(3, 10).setNumberFormat('0.00%');
   sheet.getRange(3, 7, 1, 4).setBackground('#FFFFFF').setFontSize(12)
     .setFontWeight('bold').setHorizontalAlignment('center')
     .setBorder(true,true,true,true,true,true,'#DDDDDD',SpreadsheetApp.BorderStyle.SOLID);
+
+  // 데이터 행 수식 전체 범위에 걸기 (새로 추가된 행 포함)
+  for (let row = DATA_START_ROW; row <= lastRow; row++) {
+    const mCell = sheet.getRange(row, 13); // 클릭률(CTR)
+    const oCell = sheet.getRange(row, 15); // 전환율(CVR)
+    const qCell = sheet.getRange(row, 17); // ROAS
+    if (!mCell.getFormula()) {
+      mCell.setFormula('=IFERROR(L' + row + '/K' + row + ',0)');
+      mCell.setNumberFormat('0.00%');
+    }
+    if (!oCell.getFormula()) {
+      oCell.setFormula('=IFERROR(N' + row + '/L' + row + ',0)');
+      oCell.setNumberFormat('0.00%');
+    }
+    if (!qCell.getFormula()) {
+      qCell.setFormula('=IFERROR(P' + row + '/J' + row + ',0)');
+      qCell.setNumberFormat('0.00');
+    }
+  }
 }
 
 function out(data) {

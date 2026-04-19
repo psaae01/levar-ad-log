@@ -682,9 +682,12 @@ const platformParse = {
 };
 
 function extractDateFromFilename(filename) {
-  // 공백/언더스코어 모두 지원, 유니코드 플래그 사용
-  const m = filename.match(/(\d{4})년.{0,2}(\d{1,2})월.{0,2}(\d{1,2})일/);
-  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  // 방법1: YYYY-MM-DD 형식 (예: 29cm_2026-01-01.csv)
+  const m1 = filename.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m1) return `${m1[1]}-${m1[2]}-${m1[3]}`;
+  // 방법2: 한글 날짜 (예: 2026년 1월 1일 또는 2026년_1월_1일)
+  const m2 = filename.match(/(\d{4})년.{0,3}(\d{1,2})월.{0,3}(\d{1,2})일/);
+  if (m2) return `${m2[1]}-${String(m2[2]).padStart(2,'0')}-${String(m2[3]).padStart(2,'0')}`;
   return new Date().toISOString().slice(0,10);
 }
 

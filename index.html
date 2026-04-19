@@ -865,14 +865,25 @@ function parseNum(v) {
   return parseFloat(String(v).replace(/,/g,'').replace(/%/g,'')) || 0;
 }
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  // BOM 제거 및 첫줄이 메타데이터인 경우 스킵
+  text = text.replace(/^\uFEFF/, '');
+  function parseLine(line) {
+    const result = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    result.push(cur.trim());
+    return result;
+  }
+  const lines = text.trim().split('\n').filter(l => l.trim());
   let headerIdx = 0;
   if (lines[0] && !lines[0].includes(',')) headerIdx = 1;
-  const headers = lines[headerIdx].split(',').map(h=>h.trim().replace(/"/g,''));
+  const headers = parseLine(lines[headerIdx]).map(h => h.replace(/"/g,'').trim());
   return lines.slice(headerIdx+1).map(line => {
-    const vals = line.split(',').map(v=>v.trim().replace(/"/g,''));
-    const obj = {}; headers.forEach((h,i)=>{ obj[h]=vals[i]||''; });
+    const vals = parseLine(line).map(v => v.replace(/"/g,'').trim());
+    const obj = {}; headers.forEach((h,i)=>{ obj[h] = vals[i]||''; });
     return obj;
   }).filter(r => Object.values(r).some(v=>v));
 }

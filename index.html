@@ -964,7 +964,7 @@ function appendRows(rows) {
     sheet.getRange(row, 16).setNumberFormat('#,##0');
     sheet.getRange(row, 13).setNumberFormat('0.00%');
     sheet.getRange(row, 15).setNumberFormat('0.00%');
-    sheet.getRange(row, 17).setNumberFormat('0.00');
+    sheet.getRange(row, 17).setNumberFormat('0"%"');
   });
   updateSummary(sheet);
   return out({ ok: true, added: rows.length });

@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEVAR · 광고 성과 입력</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #1A1A18;
+  --ink-50: rgba(26,26,24,0.5);
+  --ink-15: rgba(26,26,24,0.12);
+  --paper: #F5F4EF;
+  --paper-2: #ECEAE3;
+  --white: #FFFFFF;
+  --accent: #C8A96E;
+  --green: #2A7A55;
+  --green-bg: #E6F4EE;
+  --red: #C0392B;
+  --red-bg: #FDECEA;
+  --blue: #2A5CAA;
+  --blue-bg: #EEF4FF;
+}
+html { font-size: 14px; }
+body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+
+/* NAV */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--ink); display: flex; align-items: center;
+  justify-content: space-between; padding: 0 28px; height: 50px;
+}
+.nav-brand { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--accent); letter-spacing: 0.1em; }
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab { font-size: 11px; padding: 6px 14px; border-radius: 4px; cursor: pointer; color: rgba(255,255,255,0.4); border: none; background: none; font-family: inherit; transition: all 0.15s; }
+.nav-tab.active { background: rgba(255,255,255,0.1); color: var(--accent); }
+.nav-tab:hover:not(.active) { color: rgba(255,255,255,0.8); }
+.conn-dot { font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.3); }
+.conn-dot.on { color: #4CAF50; }
+
+/* PAGE */
+.page { display: none; padding: 28px 32px; max-width: 860px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* SECTION LABEL */
+.slabel { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-50); display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.slabel::after { content: ''; flex: 1; height: 1px; background: var(--ink-15); }
+
+/* CARD */
+.card { background: var(--white); border: 1px solid var(--ink-15); border-radius: 6px; padding: 22px; margin-bottom: 16px; }
+.card-title { font-size: 13px; font-weight: 700; margin-bottom: 18px; }
+.card-sub { font-size: 11px; color: var(--ink-50); margin-top: -12px; margin-bottom: 18px; }
+
+/* FORM */
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg label { font-size: 10px; font-weight: 700; color: var(--ink-50); letter-spacing: 0.06em; text-transform: uppercase; }
+.fg input, .fg select {
+  padding: 10px 12px; border: 1.5px solid var(--ink-15); border-radius: 5px;
+  font-family: inherit; font-size: 13px; background: var(--paper); color: var(--ink);
+  outline: none; transition: border-color 0.15s;
+}
+.fg input:focus, .fg select:focus { border-color: var(--ink); background: #fff; }
+.fg select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+
+/* INPUT WITH UNIT */
+.input-unit { position: relative; }
+.input-unit input { width: 100%; padding-right: 36px; }
+.input-unit .unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--ink-50); pointer-events: none; font-family: 'DM Mono', monospace; }
+
+/* AUTO CALC DISPLAY */
+.calc-row { display: flex; gap: 10px; margin-top: 14px; }
+.calc-item { flex: 1; background: var(--paper); border-radius: 5px; padding: 10px 14px; }
+.calc-item-label { font-size: 9px; font-weight: 700; color: var(--ink-50); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+.calc-item-val { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; color: var(--ink); }
+.calc-item-val.good { color: var(--green); }
+.calc-item-val.warn { color: #E67E22; }
+
+/* MANUAL ROWS */
+.manual-row {
+  background: var(--paper); border: 1.5px solid var(--ink-15); border-radius: 6px;
+  padding: 16px; margin-bottom: 10px; position: relative;
+  animation: fadeIn 0.2s ease;
+}
+.manual-row.has-data { border-color: rgba(26,26,24,0.3); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.row-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink-50); }
+.row-del { background: none; border: none; cursor: pointer; color: var(--ink-50); font-size: 18px; line-height: 1; padding: 0; transition: color 0.1s; }
+.row-del:hover { color: var(--red); }
+.row-preview { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--ink-15); display: flex; gap: 16px; flex-wrap: wrap; }
+.row-preview-item { font-size: 11px; }
+.row-preview-item span { font-family: 'DM Mono', monospace; font-weight: 500; }
+
+/* BUTTONS */
+.btn { padding: 10px 20px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--ink); color: #fff; }
+.btn-primary:hover { background: #333; }
+.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+.btn-secondary { background: var(--paper-2); color: var(--ink); border: 1px solid var(--ink-15); }
+.btn-secondary:hover { background: var(--paper); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-green:hover { opacity: 0.9; }
+.btn-sm { padding: 7px 14px; font-size: 11px; }
+.btn-group { display: flex; gap: 10px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+
+/* UPLOAD */
+.upload-zone {
+  border: 2px dashed var(--ink-15); border-radius: 8px; padding: 36px 24px;
+  text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--ink); background: rgba(26,26,24,0.03); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.upload-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-text { font-size: 13px; font-weight: 600; }
+.upload-sub { font-size: 11px; color: var(--ink-50); margin-top: 4px; }
+
+/* PLATFORM BADGE */
+.platform-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.pb-meta { background: #E7F0FF; color: #1877F2; }
+.pb-naver { background: #E6F7EC; color: #03C75A; }
+.pb-29cm { background: #F0F0F0; color: #1A1A18; }
+.pb-musinsa { background: #E6FAF5; color: #00B493; }
+.pb-unknown { background: var(--paper-2); color: var(--ink-50); }
+
+/* STATUS */
+.status-msg { margin-top: 10px; padding: 10px 14px; border-radius: 5px; font-size: 12px; display: none; }
+.status-msg.ok { background: var(--green-bg); color: var(--green); display: block; }
+.status-msg.err { background: var(--red-bg); color: var(--red); display: block; }
+.status-msg.info { background: var(--blue-bg); color: var(--blue); display: block; }
+
+/* PREVIEW TABLE */
+.preview-wrap { overflow-x: auto; margin-top: 14px; border-radius: 5px; border: 1px solid var(--ink-15); }
+.ptable { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
+.ptable th { padding: 8px 12px; background: var(--paper-2); text-align: left; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-50); border-bottom: 1px solid var(--ink-15); }
+.ptable td { padding: 8px 12px; border-bottom: 1px solid var(--ink-15); font-family: 'DM Mono', monospace; font-size: 11px; }
+.ptable tr:last-child td { border-bottom: none; }
+.ptable tr:hover td { background: var(--paper); }
+.num-cell { text-align: right; }
+
+/* LOG */
+.log-item { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--ink-15); font-size: 12px; align-items: flex-start; }
+.log-item:last-child { border-bottom: none; }
+.log-time { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink-50); flex-shrink: 0; padding-top: 2px; min-width: 60px; }
+.log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.ld-ok { background: var(--green); }
+.ld-err { background: var(--red); }
+.ld-info { background: var(--accent); }
+.log-body { flex: 1; line-height: 1.5; }
+.lcount { font-family: 'DM Mono', monospace; font-size: 10px; background: var(--paper-2); padding: 1px 7px; border-radius: 10px; margin-left: 6px; }
+.log-empty { padding: 32px; text-align: center; color: var(--ink-50); font-size: 12px; }
+
+/* STAT */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.stat-card { background: var(--paper); border-radius: 5px; padding: 14px 16px; }
+.sc-label { font-size: 10px; color: var(--ink-50); margin-bottom: 4px; }
+.sc-val { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; }
+.sc-sub { font-size: 10px; color: var(--ink-50); margin-top: 2px; }
+
+/* SETUP */
+.setup-url { display: flex; gap: 10px; }
+.setup-url input { flex: 1; padding: 10px 14px; border: 1.5px solid var(--ink-15); border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 12px; background: var(--paper); outline: none; }
+.setup-url input:focus { border-color: var(--ink); }
+.hint { font-size: 11px; color: var(--ink-50); line-height: 1.7; margin-top: 8px; }
+.step-list { list-style: none; counter-reset: steps; }
+.step-list li { counter-increment: steps; display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--ink-15); font-size: 12px; line-height: 1.6; }
+.step-list li:last-child { border-bottom: none; }
+.step-list li::before { content: counter(steps); background: var(--ink); color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px; font-family: 'DM Mono', monospace; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--ink-15); margin: 18px 0; }
+
+/* CODE BLOCK */
+.code-block { background: var(--ink); color: #E8E6DF; padding: 18px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.7; overflow-x: auto; white-space: pre; position: relative; }
+.copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.6); padding: 4px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; font-family: inherit; }
+.copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--ink); color: #fff; padding: 11px 22px; border-radius: 24px; font-size: 12px; z-index: 9999; pointer-events: none; opacity: 0; transition: all 0.25s; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.g { background: var(--green); }
+.toast.r { background: var(--red); }
+
+.divsel { display: flex; gap: 6px; flex-wrap: wrap; }
+.divsel-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--ink-15); background: var(--paper); font-size: 11px; cursor: pointer; transition: all 0.15s; font-family: inherit; color: var(--ink); }
+.divsel-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">LEVAR · AD LOG</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="nav('manual')">수동 입력</button>
+    <button class="nav-tab" onclick="nav('upload')">파일 업로드</button>
+    <button class="nav-tab" onclick="nav('log')">저장 로그</button>
+    <button class="nav-tab" onclick="nav('setup')">설정</button>
+  </div>
+  <div class="conn-dot" id="connDot">● 미연결</div>
+</nav>
+
+<!-- ══ PAGE: 수동 입력 ══ -->
+<div class="page active" id="page-manual">
+  <div class="slabel">수동 입력</div>
+
+  <!-- STEP 1: 날짜 -->
+  <div class="card">
+    <div class="card-title">① 날짜 · 기본 정보</div>
+    <div class="grid3">
+      <div class="fg">
+        <label>날짜</label>
+        <input type="date" id="m-date" onchange="updateWeekInfo()">
+      </div>
+      <div class="fg">
+        <label>시즌 / 프로모션</label>
+        <select id="m-season">
+          <option value="26SS">26SS</option>
+          <option value="25WINTER">25WINTER</option>
+          <option value="프로모션">프로모션</option>
+          <option value="이벤트">이벤트</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>메모 (인사이트)</label>
+        <input type="text" id="m-note" placeholder="특이사항, 넥스트 액션 등">
+      </div>
+    </div>
+    <div id="weekInfo" style="margin-top:10px;font-size:11px;color:var(--ink-50);font-family:'DM Mono',monospace;"></div>
+  </div>
+
+  <!-- STEP 2: 매체별 입력 행 -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="card-title" style="margin:0">② 매체별 데이터</div>
+      <button class="btn btn-secondary btn-sm" onclick="addManualRow()">+ 행 추가</button>
+    </div>
+    <div class="card-sub">각 매체마다 한 행씩 입력해주세요. 광고비와 매출만 입력해도 ROAS가 자동 계산돼요.</div>
+    <div id="manualRows"></div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="submitManual()" id="manualSaveBtn">
+        <span>구글 시트에 저장</span>
+      </button>
+      <button class="btn btn-secondary" onclick="resetManual()">초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: 파일 업로드 ══ -->
+<div class="page" id="page-upload">
+  <div class="slabel">파일 업로드</div>
+
+  <div class="card">
+    <div class="card-title">플랫폼 파일 업로드</div>
+    <div class="card-sub">메타 xlsx · 네이버 csv · 29CM csv · 무신사 csv — 자동으로 플랫폼을 감지해요</div>
+
+    <div class="upload-zone" id="uploadZone"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event)">
+      <input type="file" accept=".xlsx,.xls,.csv" multiple onchange="handleFiles(this.files)">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text">파일을 드래그하거나 클릭해서 선택</div>
+      <div class="upload-sub">여러 파일 동시 업로드 가능 · xlsx · csv</div>
+    </div>
+    <div id="uploadStatus" class="status-msg"></div>
+  </div>
+
+  <!-- 파싱 결과 -->
+  <div id="parsedResults"></div>
+</div>
+
+<!-- ══ PAGE: 저장 로그 ══ -->
+<div class="page" id="page-log">
+  <div class="slabel">저장 로그</div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="sc-label">저장 횟수</div><div class="sc-val" id="st-count">0</div><div class="sc-sub">이 세션</div></div>
+    <div class="stat-card"><div class="sc-label">저장된 행</div><div class="sc-val" id="st-rows">0</div><div class="sc-sub">누적</div></div>
+    <div class="stat-card"><div class="sc-label">마지막 저장</div><div class="sc-val" id="st-last" style="font-size:13px">—</div></div>
+    <div class="stat-card"><div class="sc-label">연결 상태</div><div class="sc-val" id="st-conn" style="font-size:13px;color:var(--ink-50)">미연결</div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-title" style="margin:0">작업 로그</div>
+      <button class="btn btn-secondary btn-sm" onclick="clearLog()">초기화</button>
+    </div>
+    <div id="logContainer"><div class="log-empty">아직 저장 기록이 없어요</div></div>
+  </div>
+</div>
+
+<!-- ══ PAGE: 설정 ══ -->
+<div class="page" id="page-setup">
+  <div class="slabel">설정</div>
+
+  <div class="card">
+    <div class="card-title">Apps Script 연결</div>
+    <div class="setup-url">
+      <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+      <button class="btn btn-secondary btn-sm" onclick="testConn()">연결 테스트</button>
+      <button class="btn btn-primary btn-sm" onclick="saveUrl()">저장</button>
+    </div>
+    <div id="connMsg" class="status-msg"></div>
+    <div class="divider"></div>
+    <div class="card-title">설정 방법</div>
+    <ol class="step-list">
+      <li>새 구글 시트 만들기 (이름: <strong>LEVAR_AD_LOG</strong>)</li>
+      <li>확장 프로그램 → Apps Script 클릭</li>
+      <li>아래 코드 전체 복사 → 붙여넣기 → 저장(Ctrl+S)</li>
+      <li>배포 → 새 배포 → 웹 앱 → 액세스: <strong>모든 사용자</strong> → 배포</li>
+      <li>배포 URL 복사 → 위 입력창에 붙여넣기 → 저장</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="card-title" style="margin:0">Apps Script 코드</div>
+    </div>
+    <div style="position:relative">
+      <div class="code-block" id="scriptCode"></div>
+      <button class="copy-btn" onclick="copyCode()">복사</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══
+let CFG = { url: '', season: '26SS' };
+let LOG = [], statCount = 0, statRows = 0;
+let uploadParsed = []; // [{platform, rows, divType}]
+
+// ══ INIT ══
+window.addEventListener('DOMContentLoaded', () => {
+  try { const s = localStorage.getItem('levar_cfg'); if (s) CFG = {...CFG, ...JSON.parse(s)}; } catch(e){}
+  document.getElementById('scriptUrl').value = CFG.url || '';
+  setToday();
+  addManualRow('입점몰(성장솔루션)', '29CM');
+  addManualRow('입점몰(메타)', '29CM');
+  addManualRow('자사몰(메타)', '메타');
+  addManualRow('입점몰(성장솔루션)', '무신사');
+  updateConnDot();
+  document.getElementById('scriptCode').textContent = SCRIPT_CODE;
+});
+
+function setToday() {
+  const d = new Date();
+  document.getElementById('m-date').value = d.toISOString().slice(0,10);
+  updateWeekInfo();
+}
+
+function updateWeekInfo() {
+  const v = document.getElementById('m-date').value;
+  if (!v) return;
+  const d = new Date(v);
+  const dow = ['일','월','화','수','목','금','토'][d.getDay()];
+  const week = getWeek(v);
+  const month = d.getMonth()+1;
+  document.getElementById('weekInfo').textContent = `${month}월 ${week}주차 · ${dow}요일`;
+}
+
+function getWeek(dateStr) {
+  const d = new Date(dateStr);
+  const first = new Date(d.getFullYear(), d.getMonth(), 1);
+  return Math.ceil((d.getDate() + first.getDay()) / 7);
+}
+function getDow(dateStr) { return ['일','월','화','수','목','금','토'][new Date(dateStr).getDay()]; }
+
+// ══ NAV ══
+function nav(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ══ 구분 선택 ══
+const DIV_OPTIONS = ['입점몰(성장솔루션)','입점몰(메타)','자사몰(메타)','자사몰(네이버SA)','자사몰(CRM)'];
+const MEDIA_OPTIONS = ['29CM','메타','무신사','네이버','카카오','문자'];
+const DIV_MEDIA_MAP = {
+  '입점몰(성장솔루션)': ['29CM','무신사'],
+  '입점몰(메타)': ['29CM','무신사','메타'],
+  '자사몰(메타)': ['메타'],
+  '자사몰(네이버SA)': ['네이버'],
+  '자사몰(CRM)': ['카카오','문자'],
+};
+
+// ══ 수동 입력 행 ══
+let rowId = 0;
+function addManualRow(defaultDiv='입점몰(성장솔루션)', defaultMedia='29CM') {
+  const id = rowId++;
+  const divOpts = DIV_OPTIONS.map(d=>`<option value="${d}" ${d===defaultDiv?'selected':''}>${d}</option>`).join('');
+  const mediaOpts = getMediaOpts(defaultDiv, defaultMedia);
+  const html = `
+  <div class="manual-row" id="mr-${id}">
+    <div class="row-header">
+      <span class="row-num">행 ${id+1}</span>
+      <button class="row-del" onclick="delRow(${id})">×</button>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="fg">
+        <label>구분</label>
+        <select id="div-${id}" onchange="onDivChange(${id})">
+          ${divOpts}
+        </select>
+      </div>
+      <div class="fg">
+        <label>매체명</label>
+        <select id="media-${id}" onchange="calcRow(${id})">${mediaOpts}</select>
+      </div>
+    </div>
+    <div class="grid4">
+      <div class="fg">
+        <label>광고비</label>
+        <div class="input-unit">
+          <input type="number" id="adspend-${id}" placeholder="0" min="0" oninput="calcRow(${id})" onchange="calcRow(${id})">
+          <span class="unit">원</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>매출</label>
+        <div class="input-unit">
+          <input type="number" id="sales-${id}" placeholder="0" min="0" oninput="calcRow(${id})" onchange="calcRow(${id})">
+          <span class="unit">원</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>노출수</label>
+        <input type="number" id="imp-${id}" placeholder="0" min="0" oninput="calcRow(${id})">
+      </div>
+      <div class="fg">
+        <label>클릭수</label>
+        <input type="number" id="click-${id}" placeholder="0" min="0" oninput="calcRow(${id})">
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:12px">
+      <div class="fg">
+        <label>전환수 (판매건수)</label>
+        <input type="number" id="conv-${id}" placeholder="0" min="0" oninput="calcRow(${id})">
+      </div>
+      <div class="fg">
+        <label>캠페인명 <span style="font-weight:400;text-transform:none">(선택)</span></label>
+        <input type="text" id="camp-${id}" placeholder="예: 25WINTER_시즌상품">
+      </div>
+    </div>
+    <div class="calc-row" id="calc-${id}">
+      <div class="calc-item"><div class="calc-item-label">ROAS</div><div class="calc-item-val" id="roas-${id}">—</div></div>
+      <div class="calc-item"><div class="calc-item-label">CTR</div><div class="calc-item-val" id="ctr-${id}">—</div></div>
+      <div class="calc-item"><div class="calc-item-label">CVR</div><div class="calc-item-val" id="cvr-${id}">—</div></div>
+    </div>
+  </div>`;
+  document.getElementById('manualRows').insertAdjacentHTML('beforeend', html);
+}
+
+function getMediaOpts(div, selected) {
+  const list = DIV_MEDIA_MAP[div] || MEDIA_OPTIONS;
+  return list.map(m=>`<option value="${m}" ${m===selected?'selected':''}>${m}</option>`).join('');
+}
+
+function onDivChange(id) {
+  const div = document.getElementById(`div-${id}`).value;
+  const mediaSel = document.getElementById(`media-${id}`);
+  const cur = mediaSel.value;
+  mediaSel.innerHTML = getMediaOpts(div, cur);
+  calcRow(id);
+}
+
+function calcRow(id) {
+  const ad = parseNum(document.getElementById(`adspend-${id}`)?.value);
+  const sa = parseNum(document.getElementById(`sales-${id}`)?.value);
+  const im = parseNum(document.getElementById(`imp-${id}`)?.value);
+  const cl = parseNum(document.getElementById(`click-${id}`)?.value);
+  const cv = parseNum(document.getElementById(`conv-${id}`)?.value);
+
+  const roas = ad > 0 && sa > 0 ? (sa/ad).toFixed(1)+'x' : '—';
+  const ctr = im > 0 && cl > 0 ? (cl/im*100).toFixed(2)+'%' : '—';
+  const cvr = cl > 0 && cv > 0 ? (cv/cl*100).toFixed(2)+'%' : '—';
+
+  const re = document.getElementById(`roas-${id}`);
+  const te = document.getElementById(`ctr-${id}`);
+  const ve = document.getElementById(`cvr-${id}`);
+  if (re) { re.textContent = roas; re.className = 'calc-item-val' + (parseFloat(roas)>=15?' good':parseFloat(roas)>0&&parseFloat(roas)<5?' warn':''); }
+  if (te) te.textContent = ctr;
+  if (ve) ve.textContent = cvr;
+
+  const row = document.getElementById(`mr-${id}`);
+  if (row) row.classList.toggle('has-data', ad > 0 || sa > 0);
+}
+
+function delRow(id) { document.getElementById(`mr-${id}`)?.remove(); }
+
+function resetManual() {
+  document.getElementById('manualRows').innerHTML = '';
+  rowId = 0;
+  setToday();
+  addManualRow('입점몰(성장솔루션)', '29CM');
+  addManualRow('입점몰(메타)', '29CM');
+  addManualRow('자사몰(메타)', '메타');
+  addManualRow('입점몰(성장솔루션)', '무신사');
+}
+
+function collectManual() {
+  const date = document.getElementById('m-date').value;
+  if (!date) { toast('날짜를 선택해주세요', 'r'); return null; }
+  const season = document.getElementById('m-season').value;
+  const note = document.getElementById('m-note').value.trim();
+  const d = new Date(date);
+  const rows = [];
+  document.querySelectorAll('.manual-row').forEach(row => {
+    const id = row.id.replace('mr-','');
+    const ad = parseNum(document.getElementById(`adspend-${id}`)?.value);
+    const sa = parseNum(document.getElementById(`sales-${id}`)?.value);
+    if (ad === 0 && sa === 0) return;
+    const im = parseNum(document.getElementById(`imp-${id}`)?.value);
+    const cl = parseNum(document.getElementById(`click-${id}`)?.value);
+    const cv = parseNum(document.getElementById(`conv-${id}`)?.value);
+    rows.push({
+      날짜: date, 연도: d.getFullYear(), 월: d.getMonth()+1,
+      주차: getWeek(date), 요일: getDow(date),
+      구분: document.getElementById(`div-${id}`)?.value || '',
+      매체명: document.getElementById(`media-${id}`)?.value || '',
+      '시즌/프로모션': season, 캠페인명: document.getElementById(`camp-${id}`)?.value || '',
+      광고비: ad, 노출수: im, 클릭수: cl,
+      CTR: cl&&im ? +(cl/im).toFixed(4) : 0,
+      전환수: cv, CVR: cv&&cl ? +(cv/cl).toFixed(4) : 0,
+      매출: sa, ROAS: ad&&sa ? +(sa/ad).toFixed(2) : 0,
+      인사이트: note,
+    });
+  });
+  if (!rows.length) { toast('입력된 데이터가 없어요 (광고비 또는 매출을 입력해주세요)', 'r'); return null; }
+  return rows;
+}
+
+async function submitManual() {
+  const rows = collectManual();
+  if (!rows) return;
+  await sendRows(rows, '수동 입력');
+}
+
+// ══ 파일 업로드 ══
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+}
+
+function handleFiles(files) {
+  uploadParsed = [];
+  document.getElementById('parsedResults').innerHTML = '';
+  Array.from(files).forEach(f => parseFile(f));
+}
+
+function parseFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let rawRows;
+      if (ext === 'csv') {
+        rawRows = parseCSV(e.target.result);
+      } else {
+        const wb = XLSX.read(e.target.result, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rawRows = XLSX.utils.sheet_to_json(ws);
+      }
+      const platform = detectPlatform(rawRows, file.name);
+      const parsed = platformParse[platform](rawRows);
+      uploadParsed.push({ platform, file: file.name, rows: parsed });
+      renderParsedCard(platform, file.name, parsed, uploadParsed.length - 1);
+      showUploadStatus('ok', `${file.name} — ${platform} 감지 · ${parsed.length}행 파싱 완료`);
+    } catch(err) {
+      showUploadStatus('err', `${file.name} 파싱 오류: ${err.message}`);
+    }
+  };
+  if (ext === 'csv') reader.readAsText(file, 'utf-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+// ── 플랫폼 감지 ──
+function detectPlatform(rows, filename) {
+  if (!rows.length) return 'unknown';
+  const cols = Object.keys(rows[0]).join(' ');
+  const fn = filename.toLowerCase();
+  if (cols.includes('캠페인 이름') || cols.includes('광고 세트') || cols.includes('지출 금액')) return 'meta';
+  if (cols.includes('캠페인유형') || cols.includes('파워링크') || fn.includes('계정_보고서')) return 'naver';
+  if (cols.includes('집행 광고비') && (cols.includes('광고 수익률') || fn.includes('29cm'))) return '29cm';
+  if (fn.includes('무신사') || cols.includes('무신사')) return 'musinsa';
+  return 'unknown';
+}
+
+// ── 플랫폼별 파서 ──
+const platformParse = {
+  // 메타: 캠페인×날짜×광고소재 → 날짜×캠페인 합산
+  meta(rows) {
+    const byDateCamp = {};
+    rows.forEach(r => {
+      const date = String(r['일']||r['날짜']||'').slice(0,10);
+      const camp = r['캠페인 이름']||r['캠페인명']||'';
+      if (!date || date.length < 8) return;
+      const key = `${date}__${camp}`;
+      if (!byDateCamp[key]) byDateCamp[key] = { date, camp, ad:0, imp:0, click:0, conv:0, sales:0 };
+      byDateCamp[key].ad    += parseNum(r['지출 금액 (KRW)']||r['지출금액']||0);
+      byDateCamp[key].imp   += parseNum(r['노출']||r['노출수']||0);
+      byDateCamp[key].click += parseNum(r['클릭(전체)']||r['클릭수']||0);
+      byDateCamp[key].conv  += parseNum(r['결과']||r['전환수']||0);
+      byDateCamp[key].sales += parseNum(r['결과 값']||r['전환매출']||0);
+    });
+    return Object.values(byDateCamp).map(r => makeRow(r.date, '자사몰(메타)', '메타', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
+  },
+
+  // 네이버: 날짜×캠페인×광고그룹 → 날짜×캠페인 합산
+  naver(rows) {
+    const byDateCamp = {};
+    rows.forEach(r => {
+      let date = String(r['일별']||r['날짜']||'').replace(/\./g,'-').replace(/-$/,'').trim();
+      if (date.length === 9) date = date; // 2026-02-01 형식 맞추기
+      const camp = r['캠페인']||'';
+      if (!date || !camp) return;
+      const key = `${date}__${camp}`;
+      if (!byDateCamp[key]) byDateCamp[key] = { date, camp, ad:0, imp:0, click:0, conv:0, sales:0 };
+      byDateCamp[key].ad    += parseNum(r['총비용']||0);
+      byDateCamp[key].imp   += parseNum(r['노출수']||0);
+      byDateCamp[key].click += parseNum(r['클릭수']||0);
+      byDateCamp[key].conv  += parseNum(r['구매완료 전환수']||0);
+      byDateCamp[key].sales += parseNum(r['구매완료 전환매출액(원)']||0);
+    });
+    return Object.values(byDateCamp).map(r => makeRow(r.date, '자사몰(네이버SA)', '네이버', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
+  },
+
+  // 29CM 일별: 날짜 합산 (캠페인 없음)
+  '29cm'(rows) {
+    return rows.filter(r => r['날짜']).map(r => {
+      const date = String(r['날짜']).slice(0,10);
+      const ad = parseNum(r['집행 광고비']);
+      const sa = parseNum(r['매출']);
+      const im = parseNum(r['노출 수']);
+      const cl = parseNum(r['클릭 수']);
+      const cv = parseNum(r['판매 수']);
+      return makeRow(date, '입점몰(성장솔루션)', '29CM', '', ad, im, cl, cv, sa);
+    });
+  },
+
+  // 무신사: 29CM과 동일 구조
+  musinsa(rows) {
+    return rows.filter(r => r['날짜']).map(r => {
+      const date = String(r['날짜']).slice(0,10);
+      const ad = parseNum(r['집행 광고비']);
+      const sa = parseNum(r['매출']);
+      const im = parseNum(r['노출 수']);
+      const cl = parseNum(r['클릭 수']);
+      const cv = parseNum(r['판매 수']);
+      return makeRow(date, '입점몰(성장솔루션)', '무신사', '', ad, im, cl, cv, sa);
+    });
+  },
+
+  unknown(rows) { return []; },
+};
+
+function makeRow(date, div, media, camp, ad, imp, click, conv, sales) {
+  const d = new Date(date);
+  return {
+    날짜: date, 연도: d.getFullYear(), 월: d.getMonth()+1,
+    주차: getWeek(date), 요일: getDow(date),
+    구분: div, 매체명: media,
+    '시즌/프로모션': '', 캠페인명: camp,
+    광고비: ad, 노출수: imp, 클릭수: click,
+    CTR: click&&imp ? +(click/imp).toFixed(4) : 0,
+    전환수: conv, CVR: conv&&click ? +(conv/click).toFixed(4) : 0,
+    매출: sales, ROAS: ad&&sales ? +(sales/ad).toFixed(2) : 0,
+    인사이트: '',
+  };
+}
+
+// ── 파싱 결과 카드 렌더 ──
+const PLATFORM_LABELS = { meta:'메타', naver:'네이버', '29cm':'29CM', musinsa:'무신사', unknown:'알 수 없음' };
+const PLATFORM_BADGE = { meta:'pb-meta', naver:'pb-naver', '29cm':'pb-29cm', musinsa:'pb-musinsa', unknown:'pb-unknown' };
+const DIV_DEFAULTS = { meta:'자사몰(메타)', naver:'자사몰(네이버SA)', '29cm':'입점몰(성장솔루션)', musinsa:'입점몰(성장솔루션)' };
+
+function renderParsedCard(platform, filename, rows, idx) {
+  const container = document.getElementById('parsedResults');
+  const label = PLATFORM_LABELS[platform];
+  const badge = PLATFORM_BADGE[platform];
+  const defaultDiv = DIV_DEFAULTS[platform] || '';
+
+  // 날짜 범위
+  const dates = rows.map(r=>r.날짜).filter(Boolean).sort();
+  const dateRange = dates.length ? `${dates[0]} ~ ${dates[dates.length-1]}` : '—';
+
+  // 미리보기 행 (최대 8개)
+  const previewRows = rows.slice(0,8).map(r=>`
+    <tr>
+      <td>${r.날짜}</td>
+      <td>${r.캠페인명||'—'}</td>
+      <td class="num-cell">${fmtN(r.광고비)}</td>
+      <td class="num-cell">${fmtN(r.매출)}</td>
+      <td class="num-cell">${r.ROAS>0?r.ROAS+'x':'—'}</td>
+      <td class="num-cell">${r.전환수||'—'}</td>
+    </tr>`).join('');
+
+  const divOpts = DIV_OPTIONS.map(d=>`<option value="${d}" ${d===defaultDiv?'selected':''}>${d}</option>`).join('');
+
+  const html = `
+  <div class="card" id="pcard-${idx}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="platform-badge ${badge}">${label}</span>
+        <span style="font-size:12px;color:var(--ink-50)">${filename}</span>
+      </div>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ink-50)">${dateRange} · ${rows.length}행</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="fg" style="flex:1;min-width:180px">
+        <label>구분 확인</label>
+        <select id="pcard-div-${idx}" onchange="updateParsedDiv(${idx})">${divOpts}</select>
+      </div>
+      <div style="margin-top:18px">
+        <button class="btn btn-green btn-sm" onclick="submitParsed(${idx})">구글 시트에 저장 (${rows.length}행)</button>
+      </div>
+    </div>
+    <div class="preview-wrap">
+      <table class="ptable">
+        <thead><tr><th>날짜</th><th>캠페인</th><th>광고비</th><th>매출</th><th>ROAS</th><th>전환수</th></tr></thead>
+        <tbody id="pcard-body-${idx}">${previewRows}</tbody>
+      </table>
+    </div>
+    ${rows.length > 8 ? `<div style="text-align:center;padding:10px;font-size:11px;color:var(--ink-50)">...외 ${rows.length-8}행</div>` : ''}
+  </div>`;
+  container.insertAdjacentHTML('beforeend', html);
+}
+
+function updateParsedDiv(idx) {
+  const div = document.getElementById(`pcard-div-${idx}`).value;
+  uploadParsed[idx].rows = uploadParsed[idx].rows.map(r => ({...r, 구분: div}));
+}
+
+async function submitParsed(idx) {
+  const div = document.getElementById(`pcard-div-${idx}`).value;
+  const rows = uploadParsed[idx].rows.map(r => ({...r, 구분: div}));
+  await sendRows(rows, `${PLATFORM_LABELS[uploadParsed[idx].platform]} 파일 업로드`);
+  document.getElementById(`pcard-${idx}`)?.remove();
+}
+
+// ══ API ══
+async function sendRows(rows, source) {
+  if (!CFG.url) { toast('설정에서 Apps Script URL을 먼저 입력해주세요', 'r'); nav('setup'); return; }
+  toast('저장 중...');
+  try {
+    const res = await fetch(CFG.url, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'append', rows }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      addLog('ok', `${source} — ${rows.length}행 저장 완료`, rows.length);
+      toast(`✅ ${rows.length}행 저장됐어요`, 'g');
+      statCount++; statRows += rows.length;
+      updateStats();
+    } else throw new Error(data.error||'오류');
+  } catch(e) {
+    addLog('err', `저장 실패: ${e.message}`, 0);
+    toast(`저장 실패: ${e.message}`, 'r');
+  }
+}
+
+async function testConn() {
+  const url = document.getElementById('scriptUrl').value.trim();
+  if (!url) { showConnMsg('err','URL을 입력해주세요'); return; }
+  showConnMsg('info','연결 테스트 중...');
+  try {
+    const res = await fetch(url+'?action=ping');
+    const data = await res.json();
+    if (data.ok) { showConnMsg('ok','✅ 연결 성공!'); CFG.url = url; localStorage.setItem('levar_cfg', JSON.stringify(CFG)); updateConnDot(); }
+    else showConnMsg('err','연결됐지만 오류: '+(data.error||''));
+  } catch(e) { showConnMsg('err','연결 실패: '+e.message); }
+}
+
+function saveUrl() {
+  CFG.url = document.getElementById('scriptUrl').value.trim();
+  localStorage.setItem('levar_cfg', JSON.stringify(CFG));
+  updateConnDot();
+  toast('저장됐어요', 'g');
+}
+
+function showConnMsg(t, m) {
+  const el = document.getElementById('connMsg');
+  el.className = 'status-msg '+t; el.textContent = m;
+}
+
+function showUploadStatus(t, m) {
+  const el = document.getElementById('uploadStatus');
+  el.className = 'status-msg '+t; el.textContent = m;
+}
+
+function updateConnDot() {
+  const el = document.getElementById('connDot');
+  const sc = document.getElementById('st-conn');
+  if (CFG.url) { el.textContent='● 연결됨'; el.className='conn-dot on'; if(sc){sc.textContent='연결됨';sc.style.color='var(--green)';} }
+  else { el.textContent='● 미연결'; el.className='conn-dot'; if(sc){sc.textContent='미연결';sc.style.color='';} }
+}
+
+// ══ LOG ══
+function addLog(type, msg, count) {
+  const t = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  LOG.unshift({type, msg, count, t});
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('logContainer');
+  if (!LOG.length) { el.innerHTML='<div class="log-empty">아직 저장 기록이 없어요</div>'; return; }
+  el.innerHTML = LOG.map(l=>`
+    <div class="log-item">
+      <div class="log-time">${l.t}</div>
+      <div class="log-dot ld-${l.type}"></div>
+      <div class="log-body">${l.msg}${l.count?`<span class="lcount">${l.count}행</span>`:''}</div>
+    </div>`).join('');
+}
+
+function clearLog() { LOG=[]; renderLog(); statCount=0; statRows=0; updateStats(); }
+
+function updateStats() {
+  document.getElementById('st-count').textContent = statCount;
+  document.getElementById('st-rows').textContent = statRows;
+  const last = LOG.find(l=>l.type==='ok');
+  document.getElementById('st-last').textContent = last ? last.t : '—';
+  updateConnDot();
+}
+
+// ══ UTILS ══
+function parseNum(v) {
+  if (v===undefined||v===null||v==='-'||v==='') return 0;
+  return parseFloat(String(v).replace(/,/g,'').replace(/%/g,'')) || 0;
+}
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  // BOM 제거 및 첫줄이 메타데이터인 경우 스킵
+  let headerIdx = 0;
+  if (lines[0] && !lines[0].includes(',')) headerIdx = 1;
+  const headers = lines[headerIdx].split(',').map(h=>h.trim().replace(/"/g,''));
+  return lines.slice(headerIdx+1).map(line => {
+    const vals = line.split(',').map(v=>v.trim().replace(/"/g,''));
+    const obj = {}; headers.forEach((h,i)=>{ obj[h]=vals[i]||''; });
+    return obj;
+  }).filter(r => Object.values(r).some(v=>v));
+}
+function fmtN(v) {
+  if (!v||v===0) return '—';
+  if (v>=1e8) return (v/1e8).toFixed(1)+'억';
+  if (v>=1e4) return Math.round(v/1e4).toLocaleString()+'만';
+  return Number(v).toLocaleString();
+}
+
+// ══ TOAST ══
+let toastT;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show'+(type?' '+type:'');
+  clearTimeout(toastT); toastT = setTimeout(()=>{ el.className='toast'; }, 2800);
+}
+function copyCode() {
+  navigator.clipboard.writeText(SCRIPT_CODE).then(()=>toast('복사됐어요','g')).catch(()=>toast('직접 선택해서 복사해주세요'));
+}
+
+// ══ APPS SCRIPT CODE ══
+const SCRIPT_CODE = `// LEVAR 광고 로우데이터 저장 · Apps Script
+const SHEET = '일별_로우데이터';
+const HDR = [
+  '날짜','연도','월','주차','요일',
+  '구분','매체명','시즌/프로모션','캠페인명',
+  '광고비','노출수','클릭수','CTR',
+  '전환수','CVR','매출','ROAS','인사이트','저장일시'
+];
+
+function doGet(e) {
+  if (e && e.parameter.action === 'ping')
+    return out({ ok: true });
+  return out({ ok: true });
+}
+
+function doPost(e) {
+  try {
+    const p = JSON.parse(e.postData.contents);
+    if (p.action === 'append') return appendRows(p.rows);
+    return out({ ok: false, error: 'unknown action' });
+  } catch(err) {
+    return out({ ok: false, error: err.message });
+  }
+}
+
+function appendRows(rows) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET);
+    const h = sheet.getRange(1, 1, 1, HDR.length);
+    h.setValues([HDR]);
+    h.setBackground('#1A1A18').setFontColor('#FFFFFF').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  const now = new Date().toLocaleString('ko-KR');
+  const data = rows.map(r =>
+    HDR.slice(0,-1).map(k => (r[k] !== undefined && r[k] !== '') ? r[k] : '-')
+       .concat([now])
+  );
+  sheet.getRange(sheet.getLastRow()+1, 1, data.length, HDR.length).setValues(data);
+  return out({ ok: true, added: data.length });
+}
+
+function out(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+</script>
+</body>
+</html>

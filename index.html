@@ -592,8 +592,8 @@ function detectPlatform(rows, filename) {
   const fn = filename.toLowerCase();
   if (cols.includes('캠페인 이름') || cols.includes('광고 세트') || cols.includes('지출 금액')) return 'meta';
   if (cols.includes('캠페인유형') || cols.includes('파워링크') || fn.includes('계정_보고서')) return 'naver';
+  if (fn.includes('무신사')) return 'musinsa';
   if (cols.includes('집행 광고비') && (cols.includes('광고 수익률') || fn.includes('29cm'))) return '29cm';
-  if (fn.includes('무신사') || cols.includes('무신사')) return 'musinsa';
   return 'unknown';
 }
 

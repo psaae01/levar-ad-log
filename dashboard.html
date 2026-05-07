@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEVAR / Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #F7F7F7;
+    color: #1A1A18;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* ============ 비밀번호 게이트 ============ */
+  .gate { position: fixed; inset: 0; background: #F7F7F7; display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .gate-box { width: 320px; background: #FFFFFF; border: 1px solid #EFEFEF; border-radius: 8px; padding: 36px 32px; }
+  .gate-brand { font-size: 10px; letter-spacing: 0.12em; color: #B5B5B5; margin-bottom: 10px; font-weight: 500; }
+  .gate-title { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .gate-sub { font-size: 11px; color: #999; font-weight: 400; margin-bottom: 24px; }
+  .gate-label { font-size: 10px; color: #999; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 400; }
+  .gate-input { width: 100%; padding: 10px 12px; border: 1px solid #E5E5E5; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 400; outline: none; background: white; color: #1A1A18; margin-bottom: 12px; transition: border-color 0.15s; }
+  .gate-input:focus { border-color: #1A1A18; }
+  .gate-input::placeholder { color: #CCC; }
+  .gate-btn { width: 100%; padding: 10px 0; background: #1A1A18; color: white; border: none; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 400; letter-spacing: 0.05em; cursor: pointer; transition: opacity 0.15s; }
+  .gate-btn:hover { opacity: 0.85; }
+  .gate-error { color: #A85048; font-size: 11px; font-weight: 400; margin-top: 12px; height: 14px; }
+
+  /* ============ 로딩 ============ */
+  .loading { position: fixed; inset: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .loading-text { font-size: 11px; color: #999; font-weight: 400; letter-spacing: 0.05em; }
+  .loading-dot { display: inline-block; animation: blink 1.4s infinite; }
+  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+  /* ============ 레이아웃 ============ */
+  .layout { display: none; min-height: 100vh; }
+  .layout.active { display: flex; }
+
+  /* ============ 사이드바 ============ */
+  .sidebar { width: 220px; background: #FFFFFF; border-right: 1px solid #EEEEEE; padding: 24px 16px; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; }
+  .sidebar-brand { padding: 8px 12px 24px; border-bottom: 1px solid #F5F5F5; margin-bottom: 16px; }
+  .sidebar-logo { font-size: 14px; font-weight: 500; letter-spacing: 0.05em; color: #1A1A18; margin-bottom: 4px; }
+  .sidebar-team { font-size: 9px; color: #999; letter-spacing: 0.05em; font-weight: 400; }
+  .sidebar-section { margin-bottom: 24px; }
+  .sidebar-section-title { font-size: 10px; color: #BBB; letter-spacing: 0; font-weight: 500; padding: 0 12px 8px; }
+  .sidebar-menu { display: flex; flex-direction: column; gap: 1px; }
+  .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 12px; font-weight: 400; color: #666; cursor: pointer; border-radius: 4px; transition: all 0.15s; text-decoration: none; border: none; background: none; font-family: inherit; width: 100%; text-align: left; }
+  .sidebar-item:hover { background: #F5F5F5; color: #1A1A18; }
+  .sidebar-item.active { background: #F7F7F7; color: #1A1A18; font-weight: 500; }
+  .sidebar-item svg { width: 13px; height: 13px; opacity: 0.8; }
+  .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid #F5F5F5; }
+  .sidebar-info { font-size: 10px; color: #BBB; font-weight: 400; line-height: 1.5; }
+
+  /* ============ 메인 콘텐츠 ============ */
+  .main { flex: 1; margin-left: 220px; padding: 24px; background: #F7F7F7; }
+  .main-inner { max-width: 1400px; margin: 0 auto; }
+
+  /* ============ 상단 ============ */
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+  .greeting { display: flex; flex-direction: column; gap: 4px; }
+  .greeting-title { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+  .greeting-sub { font-size: 11px; color: #999; font-weight: 400; }
+  .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .date-pill-group { display: flex; background: #FFFFFF; border: 1px solid #EEEEEE; border-radius: 6px; padding: 3px; gap: 1px; }
+  .date-pill { background: transparent; border: none; padding: 6px 12px; font-family: inherit; font-size: 11px; font-weight: 400; color: #999; cursor: pointer; border-radius: 4px; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px; }
+  .date-pill:hover { color: #1A1A18; }
+  .date-pill.active { background: #1A1A18; color: white; font-weight: 400; }
+
+  .refresh-btn { background: white; border: 1px solid #EEEEEE; padding: 7px 12px; font-family: inherit; font-size: 11px; font-weight: 400; color: #666; cursor: pointer; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+  .refresh-btn:hover { color: #1A1A18; border-color: #DDD; }
+  .refresh-btn svg { width: 12px; height: 12px; }
+
+  /* ============ 직접 선택 팝오버 ============ */
+  .custom-range-popover { background: #FFFFFF; border: 1px solid #EEEEEE; border-radius: 6px; padding: 16px 18px; margin-bottom: 24px; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .custom-range-row { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .custom-range-field { display: flex; flex-direction: column; gap: 5px; }
+  .custom-range-field label { font-size: 9px; color: #999; letter-spacing: 0.05em; font-weight: 400; }
+  .custom-range-field input[type="date"] { padding: 6px 10px; border: 1px solid #E5E5E5; border-radius: 4px; font-family: inherit; font-size: 12px; font-weight: 400; color: #1A1A18; background: white; outline: none; min-width: 140px; }
+  .custom-range-field input[type="date"]:focus { border-color: #1A1A18; }
+  .custom-range-arrow { color: #BBB; padding-bottom: 6px; }
+  .custom-range-apply { padding: 7px 16px; background: #1A1A18; color: white; border: none; border-radius: 4px; font-family: inherit; font-size: 11px; font-weight: 400; cursor: pointer; }
+  .custom-range-apply:hover { opacity: 0.85; }
+  .custom-range-cancel { padding: 7px 12px; background: white; color: #999; border: 1px solid #E5E5E5; border-radius: 4px; font-family: inherit; font-size: 11px; font-weight: 400; cursor: pointer; }
+  .custom-range-hint { font-size: 10px; color: #BBB; font-weight: 400; margin-top: 8px; min-height: 12px; }
+  .custom-range-hint.error { color: #A85048; }
+
+  /* ============ 매체 필터 ============ */
+  .media-filter-bar { display: flex; align-items: center; gap: 4px; background: #FFFFFF; padding: 4px; border-radius: 6px; border: 1px solid #EEEEEE; margin-bottom: 16px; width: fit-content; }
+  .media-pill { background: transparent; border: none; padding: 6px 14px; font-family: inherit; font-size: 11px; font-weight: 400; color: #999; cursor: pointer; border-radius: 4px; transition: all 0.15s; }
+  .media-pill:hover { color: #1A1A18; }
+  .media-pill.active { background: #F7F7F7; color: #1A1A18; font-weight: 400; }
+
+  /* ============ KPI 카드 ============ */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .kpi-card { background: #FFFFFF; border-radius: 8px; padding: 18px 20px; border: 1px solid #EFEFEF; }
+  .kpi-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .kpi-label { font-size: 11px; color: #999; letter-spacing: 0; font-weight: 500; }
+  .kpi-hint { font-size: 9px; color: #CCC; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+  .kpi-spark { width: 50px; height: 24px; }
+  .kpi-value-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; color: #1A1A18; }
+  .kpi-unit { font-size: 13px; color: #BBB; font-weight: 400; }
+  .kpi-change { font-size: 10px; color: #BBB; font-weight: 400; display: flex; align-items: center; gap: 6px; }
+  .kpi-pct { display: inline-flex; align-items: center; gap: 3px; }
+  .kpi-pct.up { color: #5A7A65; }
+  .kpi-pct.down { color: #A85048; }
+  .kpi-pct.flat { color: #999; }
+  .kpi-vs { color: #DDD; margin-left: auto; }
+  .kpi-grid.secondary { margin-bottom: 24px; }
+
+  /* ============ 차트 그리드 ============ */
+  .chart-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .panel { background: #FFFFFF; border-radius: 8px; padding: 20px 22px; border: 1px solid #EFEFEF; }
+  .panel-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .panel-title-group { display: flex; flex-direction: column; gap: 2px; }
+  .panel-title { font-size: 11px; color: #999; letter-spacing: 0; font-weight: 500; }
+  .panel-meta { font-size: 10px; color: #BBB; font-weight: 400; margin-top: 4px; }
+  .panel-summary { margin-top: 8px; margin-bottom: 16px; display: flex; align-items: baseline; gap: 10px; }
+  .panel-summary-label { font-size: 11px; color: #999; font-weight: 400; }
+  .panel-summary-value { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+
+  /* ============ 메인 차트 ============ */
+  .legend { display: flex; gap: 16px; font-size: 10px; color: #999; font-weight: 400; flex-wrap: wrap; justify-content: flex-end; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .monthly-chart-wrap { position: relative; margin-top: 16px; }
+  .monthly-chart { display: flex; align-items: flex-end; gap: 12px; height: 240px; padding-left: 36px; padding-bottom: 24px; position: relative; border-bottom: 1px solid #EFEFEF; }
+  .y-axis { position: absolute; left: 0; top: 0; bottom: 24px; width: 32px; display: flex; flex-direction: column; justify-content: space-between; }
+  .y-label { font-size: 9px; color: #CCC; font-weight: 400; }
+  .month-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; cursor: pointer; position: relative; transition: opacity 0.2s; padding-bottom: 22px; }
+  .month-bar.in-progress { opacity: 0.5; }
+  .month-bar:hover { opacity: 0.85; }
+  .month-bar:hover .month-tooltip { display: block; }
+  .month-total { font-size: 10px; color: #1A1A18; font-weight: 400; margin-bottom: 2px; }
+  .month-bar.in-progress .month-total { color: #999; font-weight: 400; }
+  .stack { width: 100%; max-width: 48px; display: flex; flex-direction: column; }
+  .stack > div { transition: opacity 0.2s; }
+  .month-label { font-size: 10px; color: #999; font-weight: 400; position: absolute; bottom: 2px; }
+  .month-bar.in-progress .month-label { color: #BBB; }
+  .month-tooltip { display: none; position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: #1A1A18; color: white; padding: 8px 10px; border-radius: 4px; font-size: 10px; white-space: nowrap; z-index: 10; pointer-events: none; min-width: 140px; }
+  .month-tooltip-row { display: flex; justify-content: space-between; gap: 12px; padding: 1px 0; }
+  .month-tooltip-row .label { color: #999; font-weight: 400; }
+  .month-tooltip-row .val { color: white; font-weight: 400; }
+  .month-tooltip-divider { height: 1px; background: #444; margin: 4px 0; }
+
+  /* ============ 매체별 비중 ============ */
+  .media-bars { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+  .media-bar-item { cursor: pointer; transition: opacity 0.15s; }
+  .media-bar-item:hover { opacity: 0.7; }
+  .media-bar-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .media-bar-name { font-size: 12px; font-weight: 400; }
+  .media-bar-value { font-size: 11px; font-weight: 400; }
+  .media-bar-meta { display: flex; justify-content: space-between; font-size: 9px; color: #BBB; font-weight: 400; margin-top: 4px; }
+  .media-bar-track { height: 4px; background: #F7F7F7; border-radius: 2px; overflow: hidden; }
+  .media-bar-fill { height: 100%; background: #1A1A18; border-radius: 2px; transition: width 0.4s; }
+
+  /* ============ 하단 그리드 ============ */
+  .bottom-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .data-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  .data-table th { text-align: left; font-size: 10px; color: #BBB; font-weight: 500; letter-spacing: 0; padding: 8px 8px; border-bottom: 1px solid #EFEFEF; }
+  .data-table th.right { text-align: right; }
+  .data-table td { font-size: 11px; font-weight: 400; padding: 10px 8px; border-bottom: 1px solid #F5F5F5; color: #1A1A18; }
+  .data-table td.right { text-align: right; }
+  .data-table td.muted { color: #999; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #FAFAFA; }
+
+  .media-tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 9px; font-weight: 400; background: #F7F7F7; color: #666; }
+  .media-tag.tag-29CM { background: #1A1A18; color: white; }
+  .media-tag.tag-meta { background: #555; color: white; }
+  .media-tag.tag-musinsa { background: #999; color: white; }
+  .media-tag.tag-naver { background: #DDD; color: #1A1A18; }
+
+  /* ============ 캠페인 TOP 5 ============ */
+  .campaign-list { display: flex; flex-direction: column; margin-top: 16px; }
+  .campaign-row { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 10px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid #F5F5F5; }
+  .campaign-row:last-child { border-bottom: none; }
+  .campaign-rank { font-size: 9px; color: #DDD; font-weight: 400; }
+  .campaign-name { font-size: 11px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .campaign-meta { font-size: 9px; color: #999; font-weight: 400; }
+  .campaign-roas { font-size: 11px; font-weight: 400; }
+
+  /* ============ 빈 상태 ============ */
+  .empty { text-align: center; padding: 40px 0; font-size: 11px; color: #BBB; font-weight: 400; }
+
+  /* ============ 반응형 ============ */
+  @media (max-width: 1024px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 16px; }
+    .top-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .greeting-title { font-size: 18px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .kpi-value { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 비밀번호 게이트 -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-brand">LEVAR / DASHBOARD</div>
+    <div class="gate-title">광고 성과</div>
+    <div class="gate-sub">접속하려면 비밀번호를 입력하세요</div>
+    <div class="gate-label">비밀번호</div>
+    <input type="password" class="gate-input" id="pwInput" placeholder="••••••" autocomplete="off"/>
+    <button class="gate-btn" id="pwBtn">접속</button>
+    <div class="gate-error" id="pwError"></div>
+  </div>
+</div>
+
+<!-- 로딩 -->
+<div class="loading" id="loading" style="display:none;">
+  <div class="loading-text">
+    데이터를 불러오는 중<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div class="layout" id="layout">
+
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">LEVAR</div>
+      <div class="sidebar-team">광고 대시보드</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">메인</div>
+      <nav class="sidebar-menu">
+        <button class="sidebar-item active" data-jump="top">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="2" y="2" width="5" height="6"/>
+            <rect x="9" y="2" width="5" height="3"/>
+            <rect x="9" y="7" width="5" height="7"/>
+            <rect x="2" y="10" width="5" height="4"/>
+          </svg>
+          대시보드
+        </button>
+        <button class="sidebar-item" data-jump="kpi">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <line x1="2" y1="13" x2="14" y2="13"/>
+            <rect x="3" y="9" width="2" height="4"/>
+            <rect x="7" y="6" width="2" height="7"/>
+            <rect x="11" y="3" width="2" height="10"/>
+          </svg>
+          핵심 지표
+        </button>
+        <button class="sidebar-item" data-jump="chart">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <polyline points="2,12 5,8 9,10 14,3"/>
+            <circle cx="2" cy="12" r="1" fill="currentColor"/>
+            <circle cx="14" cy="3" r="1" fill="currentColor"/>
+          </svg>
+          매출 추이
+        </button>
+        <button class="sidebar-item" data-jump="media">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <circle cx="8" cy="8" r="5"/>
+            <path d="M 8 3 L 8 8 L 12 11"/>
+          </svg>
+          매체 분석
+        </button>
+        <button class="sidebar-item" data-jump="campaigns">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <path d="M 2 11 L 2 14 L 5 14"/>
+            <path d="M 14 5 L 14 2 L 11 2"/>
+            <line x1="2" y1="14" x2="14" y2="2"/>
+          </svg>
+          캠페인
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">도구</div>
+      <nav class="sidebar-menu">
+        <a class="sidebar-item" href="https://psaae01.github.io/levar-ad-log/" target="_blank">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="3" y="3" width="10" height="10"/>
+            <line x1="6" y1="6" x2="10" y2="6"/>
+            <line x1="6" y1="9" x2="10" y2="9"/>
+          </svg>
+          데이터 입력
+        </a>
+        <a class="sidebar-item" href="https://docs.google.com/spreadsheets/d/1bN9__UoCUlxDfAaeiWYjd76Q2WuoAaVW33Pj2XlopJA/edit" target="_blank">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="2" y="2" width="12" height="12"/>
+            <line x1="2" y1="6" x2="14" y2="6"/>
+            <line x1="6" y1="2" x2="6" y2="14"/>
+          </svg>
+          시트 열기
+        </a>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-info" id="sidebarInfo">—</div>
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main">
+    <div class="main-inner">
+
+      <!-- 상단 -->
+      <div class="top-bar">
+        <div class="greeting">
+          <div class="greeting-title">광고 성과 대시보드</div>
+          <div class="greeting-sub" id="greetingSub">전체 기간 · 전체 매체</div>
+        </div>
+        <div class="controls">
+          <div class="date-pill-group">
+            <button class="date-pill" data-range="today">오늘</button>
+            <button class="date-pill" data-range="7">7일</button>
+            <button class="date-pill" data-range="thisMonth">이번달</button>
+            <button class="date-pill active" data-range="all">전체</button>
+            <button class="date-pill" id="customToggle">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3">
+                <rect x="2" y="3" width="12" height="11" rx="1"/>
+                <line x1="2" y1="6" x2="14" y2="6"/>
+              </svg>
+              직접
+            </button>
+          </div>
+          <button class="refresh-btn" id="refreshBtn">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+              <path d="M 3 8 A 5 5 0 1 1 13 8"/>
+              <polyline points="13,4 13,8 9,8"/>
+            </svg>
+            새로고침
+          </button>
+        </div>
+      </div>
+
+      <!-- 직접 선택 팝오버 -->
+      <div class="custom-range-popover" id="customRangePopover" style="display:none;">
+        <div class="custom-range-row">
+          <div class="custom-range-field">
+            <label>시작일</label>
+            <input type="date" id="customStart">
+          </div>
+          <div class="custom-range-arrow">→</div>
+          <div class="custom-range-field">
+            <label>종료일</label>
+            <input type="date" id="customEnd">
+          </div>
+          <button class="custom-range-apply" id="customApply">적용</button>
+          <button class="custom-range-cancel" id="customCancel">취소</button>
+        </div>
+        <div class="custom-range-hint" id="customHint"></div>
+      </div>
+
+      <!-- 매체 필터 -->
+      <div class="media-filter-bar">
+        <button class="media-pill active" data-media="all">전체</button>
+        <button class="media-pill" data-media="29CM">29CM</button>
+        <button class="media-pill" data-media="메타">메타</button>
+        <button class="media-pill" data-media="무신사">무신사</button>
+        <button class="media-pill" data-media="네이버">네이버</button>
+      </div>
+
+      <!-- KPI 카드 4개 (메인) -->
+      <div class="kpi-grid" id="kpiSection">
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">총 매출</div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-sales"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-sales">—</div></div>
+          <div class="kpi-change" id="kpi-sales-change"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">총 광고비</div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-spend"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-spend">—</div></div>
+          <div class="kpi-change" id="kpi-spend-change"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">평균 ROAS<span class="kpi-hint">광고수익률</span></div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-roas"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-roas">—</div><div class="kpi-unit">%</div></div>
+          <div class="kpi-change" id="kpi-roas-change"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">총 전환수</div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-conv"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-conv">—</div></div>
+          <div class="kpi-change" id="kpi-conv-change"></div>
+        </div>
+      </div>
+
+      <!-- KPI 카드 4개 (보조) -->
+      <div class="kpi-grid secondary">
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">평균 CTR<span class="kpi-hint">클릭률</span></div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-ctr"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-ctr">—</div><div class="kpi-unit">%</div></div>
+          <div class="kpi-change" id="kpi-ctr-change"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">평균 CVR<span class="kpi-hint">전환율</span></div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-cvr"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-cvr">—</div><div class="kpi-unit">%</div></div>
+          <div class="kpi-change" id="kpi-cvr-change"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">총 노출</div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-imp"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-imp">—</div></div>
+          <div class="kpi-change" id="kpi-imp-change"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-head"><div class="kpi-label">총 클릭</div><svg class="kpi-spark" viewBox="0 0 50 24" id="spark-click"></svg></div>
+          <div class="kpi-value-row"><div class="kpi-value" id="kpi-click">—</div></div>
+          <div class="kpi-change" id="kpi-click-change"></div>
+        </div>
+      </div>
+
+      <!-- 차트 그리드 -->
+      <div class="chart-grid" id="chartSection">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title-group"><div class="panel-title">매출 추이</div></div>
+            <div class="legend" id="chartLegend">
+              <div class="legend-item"><div class="legend-dot" style="background:#1A1A18;"></div>29CM</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#555;"></div>메타</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#999;"></div>무신사</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#CCC;"></div>네이버</div>
+            </div>
+          </div>
+          <div class="panel-summary">
+            <div class="panel-summary-label">총 매출</div>
+            <div class="panel-summary-value" id="panelSalesTotal">—</div>
+          </div>
+          <div class="monthly-chart-wrap">
+            <div class="monthly-chart" id="monthlyChart"></div>
+          </div>
+        </div>
+
+        <div class="panel" id="mediaPanel">
+          <div class="panel-head">
+            <div class="panel-title-group"><div class="panel-title">매체별 비중</div></div>
+          </div>
+          <div class="panel-summary">
+            <div class="panel-summary-label">최대 매체</div>
+            <div class="panel-summary-value" id="topMedia">—</div>
+          </div>
+          <div class="media-bars" id="mediaBars"></div>
+        </div>
+      </div>
+
+      <!-- 하단 그리드 -->
+      <div class="bottom-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title-group">
+              <div class="panel-title">최근 일별 데이터</div>
+              <div class="panel-meta" id="recentMeta">최근 10건</div>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>날짜</th>
+                <th>매체</th>
+                <th class="right">광고비</th>
+                <th class="right">매출</th>
+                <th class="right">전환</th>
+                <th class="right">ROAS</th>
+              </tr>
+            </thead>
+            <tbody id="dailyTable"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title-group">
+              <div class="panel-title">캠페인 TOP 5</div>
+              <div class="panel-meta" id="campaignSub">ROAS 기준</div>
+            </div>
+          </div>
+          <div class="campaign-list" id="campaignList"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwlYNKXm6Gd6pt77W2Xibe_dP1HmMAfsF1bX_ebMjUY0EfufPEEvoFZEvL4nvQt_wpN5Q/exec';
+const PASSWORD = 'levar01';
+
+const MEDIA_COLORS = { '29CM': '#1A1A18', '메타': '#555555', '무신사': '#999999', '네이버': '#CCCCCC' };
+const MEDIA_ORDER = ['29CM', '메타', '무신사', '네이버'];
+
+let allData = [];
+let currentMedia = 'all';
+let currentRange = 'all';
+let customStart = null;
+let customEnd = null;
+
+const gate = document.getElementById('gate');
+const loading = document.getElementById('loading');
+const layout = document.getElementById('layout');
+const pwInput = document.getElementById('pwInput');
+const pwBtn = document.getElementById('pwBtn');
+const pwError = document.getElementById('pwError');
+
+if (sessionStorage.getItem('levar_auth') === '1') unlock();
+pwBtn.addEventListener('click', tryUnlock);
+pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+
+function tryUnlock() {
+  if (pwInput.value === PASSWORD) {
+    sessionStorage.setItem('levar_auth', '1');
+    unlock();
+  } else {
+    pwError.textContent = '비밀번호가 틀렸어요';
+    pwInput.value = '';
+    pwInput.focus();
+  }
+}
+
+function unlock() {
+  gate.style.display = 'none';
+  loading.style.display = 'flex';
+  fetchData();
+}
+
+async function fetchData() {
+  try {
+    const url = `${API_URL}?action=getData&pwd=${PASSWORD}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || '데이터 로딩 실패');
+    allData = json.data.rows || [];
+    document.getElementById('sidebarInfo').innerHTML =
+      `업데이트<br>${formatDateTime(json.data.updatedAt)}<br><br>총 ${allData.length.toLocaleString()}건`;
+    loading.style.display = 'none';
+    layout.classList.add('active');
+    render();
+  } catch (err) {
+    loading.innerHTML = `<div class="loading-text" style="color:#A85048;">에러: ${err.message}</div>`;
+  }
+}
+
+function getFilteredData() {
+  let data = allData;
+  if (currentMedia !== 'all') data = data.filter(r => r.media === currentMedia);
+  if (currentRange === 'all') return data;
+  const range = getDateRange(currentRange);
+  if (!range) return data;
+  return data.filter(r => {
+    const d = new Date(r.date); d.setHours(0, 0, 0, 0);
+    return d >= range.start && d <= range.end;
+  });
+}
+
+function getDateRange(rangeKey) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (rangeKey === 'today') return { start: new Date(today), end: new Date(today) };
+  if (rangeKey === '7') {
+    const start = new Date(today); start.setDate(start.getDate() - 6);
+    return { start, end: new Date(today) };
+  }
+  if (rangeKey === 'thisMonth') {
+    return { start: new Date(today.getFullYear(), today.getMonth(), 1), end: new Date(today) };
+  }
+  if (rangeKey === 'custom' && customStart && customEnd) {
+    return { start: new Date(customStart), end: new Date(customEnd) };
+  }
+  return null;
+}
+
+function getPreviousData() {
+  let data = allData;
+  if (currentMedia !== 'all') data = data.filter(r => r.media === currentMedia);
+  if (currentRange === 'all') return [];
+  const range = getDateRange(currentRange);
+  if (!range) return [];
+  const days = Math.round((range.end - range.start) / 86400000) + 1;
+  const prevEnd = new Date(range.start); prevEnd.setDate(prevEnd.getDate() - 1);
+  const prevStart = new Date(prevEnd); prevStart.setDate(prevStart.getDate() - days + 1);
+  return data.filter(r => {
+    const d = new Date(r.date); d.setHours(0, 0, 0, 0);
+    return d >= prevStart && d <= prevEnd;
+  });
+}
+
+function aggregate(data) {
+  const totalSpend = data.reduce((s, r) => s + (r.spend || 0), 0);
+  const totalSales = data.reduce((s, r) => s + (r.sales || 0), 0);
+  const totalConv = data.reduce((s, r) => s + (r.conv || 0), 0);
+  const totalImp = data.reduce((s, r) => s + (r.imp || 0), 0);
+  const totalClick = data.reduce((s, r) => s + (r.click || 0), 0);
+  const roas = totalSpend > 0 ? (totalSales / totalSpend) * 100 : 0;
+  const cvr = totalClick > 0 ? (totalConv / totalClick) * 100 : 0;
+  const ctr = totalImp > 0 ? (totalClick / totalImp) * 100 : 0;
+  return { totalSpend, totalSales, totalConv, totalImp, totalClick, roas, cvr, ctr };
+}
+
+function render() {
+  const filtered = getFilteredData();
+  const previous = getPreviousData();
+  const curr = aggregate(filtered);
+  const prev = aggregate(previous);
+  updateGreeting(filtered);
+  renderKPI(curr, prev, previous.length > 0);
+  renderSparklines(filtered);
+  renderMonthlyChart(filtered);
+  renderMediaBars(filtered);
+  renderDailyTable(filtered);
+  renderCampaignTop(filtered);
+}
+
+function updateGreeting(data) {
+  const sub = document.getElementById('greetingSub');
+  let mediaText = currentMedia === 'all' ? '전체 매체' : currentMedia;
+  let rangeText = '전체 기간';
+  if (currentRange === 'today') rangeText = '오늘';
+  else if (currentRange === '7') rangeText = '최근 7일';
+  else if (currentRange === 'thisMonth') rangeText = '이번달';
+  else if (currentRange === 'custom' && customStart && customEnd) rangeText = `${formatDateShort(customStart)} ~ ${formatDateShort(customEnd)}`;
+  if (data.length > 0) {
+    const dates = data.map(r => r.date).sort();
+    sub.textContent = `${rangeText} · ${mediaText} · ${dates[0].replace(/-/g,'.')} — ${dates[dates.length-1].replace(/-/g,'.')}`;
+  } else {
+    sub.textContent = `${rangeText} · ${mediaText} · 데이터 없음`;
+  }
+}
+
+function renderKPI(curr, prev, hasComparison) {
+  setKPI('kpi-sales', formatCurrency(curr.totalSales));
+  setChange('kpi-sales-change', curr.totalSales, prev.totalSales, hasComparison, 'currency', false);
+  setKPI('kpi-spend', formatCurrency(curr.totalSpend));
+  setChange('kpi-spend-change', curr.totalSpend, prev.totalSpend, hasComparison, 'currency', true);
+  setKPI('kpi-roas', formatNumber(curr.roas, 0));
+  setChange('kpi-roas-change', curr.roas, prev.roas, hasComparison, 'point', false);
+  setKPI('kpi-conv', curr.totalConv.toLocaleString());
+  setChange('kpi-conv-change', curr.totalConv, prev.totalConv, hasComparison, 'number', false);
+  setKPI('kpi-cvr', formatNumber(curr.cvr, 2));
+  setChange('kpi-cvr-change', curr.cvr, prev.cvr, hasComparison, 'point_decimal', false);
+  setKPI('kpi-ctr', formatNumber(curr.ctr, 2));
+  setChange('kpi-ctr-change', curr.ctr, prev.ctr, hasComparison, 'point_decimal', false);
+  setKPI('kpi-imp', curr.totalImp.toLocaleString());
+  setChange('kpi-imp-change', curr.totalImp, prev.totalImp, hasComparison, 'number', false);
+  setKPI('kpi-click', curr.totalClick.toLocaleString());
+  setChange('kpi-click-change', curr.totalClick, prev.totalClick, hasComparison, 'number', false);
+  document.getElementById('panelSalesTotal').textContent = formatCurrencyShort(curr.totalSales);
+}
+
+function setKPI(id, value) { document.getElementById(id).textContent = value; }
+
+function setChange(id, currVal, prevVal, hasComparison, unit, isReverse) {
+  const el = document.getElementById(id);
+  if (!hasComparison || prevVal === 0) { el.innerHTML = `<span class="kpi-vs">전체 기간</span>`; return; }
+  const diff = currVal - prevVal;
+  const pct = (diff / prevVal) * 100;
+  const isUp = diff > 0;
+  const isFlat = Math.abs(pct) < 1;
+  let goodDirection;
+  if (isFlat) goodDirection = 'flat';
+  else if (isReverse) goodDirection = isUp ? 'down' : 'up';
+  else goodDirection = isUp ? 'up' : 'down';
+  let arrow;
+  if (isFlat) {
+    arrow = '→';
+  } else {
+    const color = goodDirection === 'up' ? '#5A7A65' : '#A85048';
+    arrow = isUp
+      ? `<svg width="7" height="7" viewBox="0 0 8 8"><path d="M 4,1 L 7,6 L 1,6 Z" fill="${color}"/></svg>`
+      : `<svg width="7" height="7" viewBox="0 0 8 8"><path d="M 4,7 L 7,2 L 1,2 Z" fill="${color}"/></svg>`;
+  }
+  let absStr;
+  if (unit === 'currency') absStr = (diff >= 0 ? '+' : '-') + formatCurrencyShort(Math.abs(diff));
+  else if (unit === 'number') absStr = (diff >= 0 ? '+' : '') + Math.round(diff).toLocaleString();
+  else if (unit === 'point') absStr = (diff >= 0 ? '+' : '') + Math.round(diff) + 'p';
+  else if (unit === 'point_decimal') absStr = (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'p';
+  el.innerHTML = `<span class="kpi-pct ${goodDirection}">${arrow} ${Math.abs(pct).toFixed(1)}%</span><span class="kpi-abs">${absStr}</span><span class="kpi-vs">vs 지난기간</span>`;
+}
+
+function renderSparklines(data) {
+  const byDate = {};
+  data.forEach(r => {
+    if (!byDate[r.date]) byDate[r.date] = { spend: 0, sales: 0, conv: 0, imp: 0, click: 0 };
+    byDate[r.date].spend += r.spend || 0;
+    byDate[r.date].sales += r.sales || 0;
+    byDate[r.date].conv += r.conv || 0;
+    byDate[r.date].imp += r.imp || 0;
+    byDate[r.date].click += r.click || 0;
+  });
+  const sorted = Object.keys(byDate).sort().slice(-14);
+  const points = sorted.map(d => byDate[d]);
+  drawSpark('spark-sales', points.map(p => p.sales), '#1A1A18');
+  drawSpark('spark-spend', points.map(p => p.spend), '#999');
+  drawSpark('spark-roas', points.map(p => p.spend > 0 ? p.sales / p.spend * 100 : 0), '#1A1A18');
+  drawSpark('spark-conv', points.map(p => p.conv), '#1A1A18');
+  drawSpark('spark-cvr', points.map(p => p.click > 0 ? p.conv / p.click * 100 : 0), '#999');
+  drawSpark('spark-ctr', points.map(p => p.imp > 0 ? p.click / p.imp * 100 : 0), '#1A1A18');
+  drawSpark('spark-imp', points.map(p => p.imp), '#999');
+  drawSpark('spark-click', points.map(p => p.click), '#999');
+}
+
+function drawSpark(id, values, color) {
+  const svg = document.getElementById(id);
+  if (!svg) return;
+  if (!values.length || values.every(v => v === 0)) { svg.innerHTML = ''; return; }
+  const max = Math.max(...values), min = Math.min(...values);
+  const range = max - min || 1;
+  const w = 50, h = 24;
+  const points = values.map((v, i) => {
+    const x = (i / (values.length - 1 || 1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return [x, y];
+  });
+  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const areaPath = `${path} L ${points[points.length-1][0]},${h} L 0,${h} Z`;
+  svg.innerHTML = `<path d="${areaPath}" fill="${color}" opacity="0.08"/><path d="${path}" fill="none" stroke="${color}" stroke-width="1"/>`;
+}
+
+function renderMonthlyChart(data) {
+  const chart = document.getElementById('monthlyChart');
+  const legend = document.getElementById('chartLegend');
+  if (currentMedia !== 'all') {
+    legend.innerHTML = `<div class="legend-item"><div class="legend-dot" style="background:${MEDIA_COLORS[currentMedia] || '#1A1A18'};"></div>${currentMedia}</div>`;
+  } else {
+    legend.innerHTML = `<div class="legend-item"><div class="legend-dot" style="background:#1A1A18;"></div>29CM</div><div class="legend-item"><div class="legend-dot" style="background:#555;"></div>메타</div><div class="legend-item"><div class="legend-dot" style="background:#999;"></div>무신사</div><div class="legend-item"><div class="legend-dot" style="background:#CCC;"></div>네이버</div>`;
+  }
+
+  const byMonth = {};
+  data.forEach(r => {
+    const ym = `${r.year}-${String(r.month).padStart(2, '0')}`;
+    if (!byMonth[ym]) byMonth[ym] = { '29CM': 0, '메타': 0, '무신사': 0, '네이버': 0, total: 0, spend: 0, conv: 0 };
+    if (byMonth[ym][r.media] !== undefined) byMonth[ym][r.media] += r.sales || 0;
+    byMonth[ym].total += r.sales || 0;
+    byMonth[ym].spend += r.spend || 0;
+    byMonth[ym].conv += r.conv || 0;
+  });
+
+  const months = Object.keys(byMonth).sort();
+  if (months.length === 0) { chart.innerHTML = '<div class="empty">데이터가 없어요</div>'; return; }
+
+  const maxTotal = Math.max(...months.map(m => byMonth[m].total));
+  const niceMax = niceCeiling(maxTotal);
+  const chartHeight = 180;
+  const now = new Date();
+  const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  let yAxisHTML = '<div class="y-axis">';
+  for (let i = 4; i >= 0; i--) yAxisHTML += `<span class="y-label">${formatShort((niceMax/4)*i)}</span>`;
+  yAxisHTML += '</div>';
+
+  let barsHTML = '';
+  months.forEach(ym => {
+    const md = byMonth[ym];
+    const monthNum = parseInt(ym.split('-')[1], 10);
+    const isCurrentMonth = ym === currentYM;
+    const roas = md.spend > 0 ? (md.total / md.spend * 100) : 0;
+
+    let stackHTML = '<div class="stack">';
+    if (currentMedia === 'all') {
+      MEDIA_ORDER.forEach(media => {
+        const h = (md[media] / niceMax) * chartHeight;
+        if (h > 0.5) stackHTML += `<div style="background:${MEDIA_COLORS[media]}; height:${h.toFixed(1)}px;"></div>`;
+      });
+    } else {
+      const h = (md[currentMedia] / niceMax) * chartHeight;
+      if (h > 0.5) stackHTML += `<div style="background:${MEDIA_COLORS[currentMedia] || '#1A1A18'}; height:${h.toFixed(1)}px;"></div>`;
+    }
+    stackHTML += '</div>';
+
+    let tooltipRows = '';
+    if (currentMedia === 'all') {
+      MEDIA_ORDER.forEach(media => {
+        if (md[media] > 0) tooltipRows += `<div class="month-tooltip-row"><span class="label">${media}</span><span class="val">${formatCurrencyShort(md[media])}</span></div>`;
+      });
+      tooltipRows += `<div class="month-tooltip-divider"></div>`;
+    }
+    tooltipRows += `<div class="month-tooltip-row"><span class="label">매출</span><span class="val">${formatCurrencyShort(md.total)}</span></div>`;
+    tooltipRows += `<div class="month-tooltip-row"><span class="label">광고비</span><span class="val">${formatCurrencyShort(md.spend)}</span></div>`;
+    tooltipRows += `<div class="month-tooltip-row"><span class="label">ROAS</span><span class="val">${formatNumber(roas, 0)}%</span></div>`;
+
+    barsHTML += `<div class="month-bar ${isCurrentMonth ? 'in-progress' : ''}"><div class="month-tooltip">${tooltipRows}</div><div class="month-total">${formatShort(md.total)}</div>${stackHTML}<div class="month-label">${monthNum}월${isCurrentMonth ? ' *' : ''}</div></div>`;
+  });
+
+  chart.innerHTML = yAxisHTML + barsHTML;
+}
+
+function niceCeiling(value) {
+  if (value === 0) return 100;
+  const exp = Math.floor(Math.log10(value));
+  const base = Math.pow(10, exp);
+  const n = value / base;
+  let nice;
+  if (n <= 1) nice = 1;
+  else if (n <= 2) nice = 2;
+  else if (n <= 5) nice = 5;
+  else nice = 10;
+  return nice * base;
+}
+
+function renderMediaBars(data) {
+  const panel = document.getElementById('mediaPanel');
+  const container = document.getElementById('mediaBars');
+  const topMedia = document.getElementById('topMedia');
+  if (currentMedia !== 'all') { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  const byMedia = {};
+  data.forEach(r => {
+    if (!byMedia[r.media]) byMedia[r.media] = { sales: 0, spend: 0 };
+    byMedia[r.media].sales += r.sales || 0;
+    byMedia[r.media].spend += r.spend || 0;
+  });
+  const totalSales = Object.values(byMedia).reduce((s, v) => s + v.sales, 0);
+  if (totalSales === 0) { container.innerHTML = '<div class="empty">데이터가 없어요</div>'; topMedia.textContent = '—'; return; }
+
+  const sorted = Object.entries(byMedia).sort((a, b) => b[1].sales - a[1].sales);
+  topMedia.textContent = `${sorted[0][0]} ${((sorted[0][1].sales / totalSales) * 100).toFixed(1)}%`;
+
+  let html = '';
+  sorted.forEach(([media, v]) => {
+    const pct = (v.sales / totalSales) * 100;
+    const roas = v.spend > 0 ? (v.sales / v.spend) * 100 : 0;
+    html += `<div class="media-bar-item" data-media="${media}"><div class="media-bar-row"><span class="media-bar-name">${media}</span><span class="media-bar-value">${formatCurrencyShort(v.sales)}</span></div><div class="media-bar-track"><div class="media-bar-fill" style="width:${pct.toFixed(1)}%; background:${MEDIA_COLORS[media] || '#1A1A18'};"></div></div><div class="media-bar-meta"><span>ROAS ${formatNumber(roas, 0)}%</span><span>${pct.toFixed(1)}%</span></div></div>`;
+  });
+  container.innerHTML = html;
+  container.querySelectorAll('.media-bar-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const btn = document.querySelector(`.media-pill[data-media="${item.dataset.media}"]`);
+      if (btn) btn.click();
+    });
+  });
+}
+
+function renderDailyTable(data) {
+  const tbody = document.getElementById('dailyTable');
+  const groupBy = currentMedia === 'all' ? 'date_media' : 'date';
+  const grouped = {};
+  data.forEach(r => {
+    const key = groupBy === 'date_media' ? `${r.date}|${r.media}` : r.date;
+    if (!grouped[key]) grouped[key] = { date: r.date, media: r.media, spend: 0, sales: 0, conv: 0 };
+    grouped[key].spend += r.spend || 0;
+    grouped[key].sales += r.sales || 0;
+    grouped[key].conv += r.conv || 0;
+  });
+  const rows = Object.values(grouped).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
+  if (rows.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center; padding: 30px;">데이터가 없어요</td></tr>'; return; }
+  let html = '';
+  rows.forEach(r => {
+    const roas = r.spend > 0 ? (r.sales / r.spend * 100) : 0;
+    const tagClass = getTagClass(r.media);
+    const dateStr = r.date.slice(5).replace('-', '.');
+    html += `<tr><td>${dateStr}</td><td>${currentMedia === 'all' ? `<span class="media-tag ${tagClass}">${r.media}</span>` : '<span class="muted">—</span>'}</td><td class="right">${formatCurrencyShort(r.spend)}</td><td class="right">${formatCurrencyShort(r.sales)}</td><td class="right">${r.conv}</td><td class="right">${formatNumber(roas, 0)}%</td></tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function getTagClass(media) {
+  if (media === '29CM') return 'tag-29CM';
+  if (media === '메타') return 'tag-meta';
+  if (media === '무신사') return 'tag-musinsa';
+  if (media === '네이버') return 'tag-naver';
+  return '';
+}
+
+function renderCampaignTop(data) {
+  const container = document.getElementById('campaignList');
+  const sub = document.getElementById('campaignSub');
+  const byCampaign = {};
+  data.forEach(r => {
+    const key = `${r.media}|${r.div}|${r.campaign}`;
+    if (!byCampaign[key]) byCampaign[key] = { media: r.media, div: r.div || '', campaign: r.campaign || '-', sales: 0, spend: 0 };
+    byCampaign[key].sales += r.sales || 0;
+    byCampaign[key].spend += r.spend || 0;
+  });
+  const campaigns = Object.values(byCampaign).filter(c => c.spend > 0).map(c => ({ ...c, roas: (c.sales / c.spend) * 100 })).sort((a, b) => b.roas - a.roas).slice(0, 5);
+  sub.textContent = currentMedia === 'all' ? 'ROAS 기준' : `${currentMedia} · ROAS 기준`;
+  if (campaigns.length === 0) { container.innerHTML = '<div class="empty">데이터가 없어요</div>'; return; }
+  let html = '';
+  campaigns.forEach((c, i) => {
+    const rank = String(i + 1).padStart(2, '0');
+    const meta = currentMedia !== 'all' ? extractDivLabel(c.div) : c.media;
+    html += `<div class="campaign-row"><span class="campaign-rank">${rank}</span><span class="campaign-name" title="${escapeHtml(c.campaign)}">${escapeHtml(c.campaign)}</span><span class="campaign-meta">${escapeHtml(meta)}</span><span class="campaign-roas">${formatNumber(c.roas, 0)}%</span></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function extractDivLabel(div) { if (!div) return '-'; return div.split('(')[0]; }
+
+const customToggle = document.getElementById('customToggle');
+const customPopover = document.getElementById('customRangePopover');
+const customStartInput = document.getElementById('customStart');
+const customEndInput = document.getElementById('customEnd');
+const customApplyBtn = document.getElementById('customApply');
+const customCancelBtn = document.getElementById('customCancel');
+const customHint = document.getElementById('customHint');
+
+document.querySelectorAll('.date-pill').forEach(btn => {
+  if (btn.id === 'customToggle') return;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.date-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    customPopover.style.display = 'none';
+    currentRange = btn.dataset.range;
+    render();
+  });
+});
+
+customToggle.addEventListener('click', () => {
+  const isOpen = customPopover.style.display !== 'none';
+  if (isOpen) {
+    customPopover.style.display = 'none';
+  } else {
+    customPopover.style.display = 'block';
+    if (allData.length > 0) {
+      const dates = allData.map(r => r.date).sort();
+      if (!customStartInput.value) customStartInput.value = dates[0];
+      if (!customEndInput.value) customEndInput.value = dates[dates.length - 1];
+    }
+    customStartInput.focus();
+  }
+});
+
+customApplyBtn.addEventListener('click', applyCustomRange);
+customStartInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyCustomRange(); });
+customEndInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyCustomRange(); });
+
+function applyCustomRange() {
+  const startStr = customStartInput.value;
+  const endStr = customEndInput.value;
+  if (!startStr || !endStr) { customHint.textContent = '시작일과 종료일을 모두 선택해주세요'; customHint.classList.add('error'); return; }
+  const s = new Date(startStr); s.setHours(0, 0, 0, 0);
+  const e = new Date(endStr); e.setHours(0, 0, 0, 0);
+  if (s > e) { customHint.textContent = '시작일이 종료일보다 늦어요'; customHint.classList.add('error'); return; }
+  customStart = s; customEnd = e;
+  currentRange = 'custom';
+  document.querySelectorAll('.date-pill').forEach(b => b.classList.remove('active'));
+  customToggle.classList.add('active');
+  const days = Math.round((e - s) / 86400000) + 1;
+  customHint.textContent = `${formatDateShort(s)} — ${formatDateShort(e)} (${days}일간)`;
+  customHint.classList.remove('error');
+  render();
+}
+
+customCancelBtn.addEventListener('click', () => {
+  customPopover.style.display = 'none';
+  if (currentRange === 'custom') {
+    currentRange = 'all'; customStart = null; customEnd = null;
+    document.querySelectorAll('.date-pill').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-range="all"]').classList.add('active');
+    render();
+  }
+});
+
+document.querySelectorAll('.media-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.media-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMedia = btn.dataset.media;
+    render();
+  });
+});
+
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  loading.style.display = 'flex';
+  fetchData();
+});
+
+document.querySelectorAll('.sidebar-item[data-jump]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    const target = item.dataset.jump;
+    if (target === 'top') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    let el;
+    if (target === 'kpi') el = document.getElementById('kpiSection');
+    else if (target === 'chart') el = document.getElementById('chartSection');
+    else if (target === 'media') el = document.getElementById('mediaPanel');
+    else if (target === 'campaigns') el = document.getElementById('campaignList');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+function formatCurrency(n) { return '₩' + Math.round(n).toLocaleString(); }
+function formatCurrencyShort(n) {
+  if (n >= 100000000) return `₩${(n / 100000000).toFixed(2)}억`;
+  if (n >= 10000000) return `₩${(n / 10000000).toFixed(1)}천만`;
+  if (n >= 10000) return `₩${(n / 10000).toFixed(0)}만`;
+  if (n === 0) return '₩0';
+  return '₩' + Math.round(n).toLocaleString();
+}
+function formatShort(n) {
+  if (n >= 100000000) return `${(n / 100000000).toFixed(1)}억`;
+  if (n >= 10000000) return `${(n / 10000000).toFixed(0)}천만`;
+  if (n >= 10000) return `${(n / 10000).toFixed(0)}만`;
+  if (n === 0) return '0';
+  return Math.round(n).toLocaleString();
+}
+function formatNumber(n, decimals) {
+  if (decimals === 0) return Math.round(n).toLocaleString();
+  return n.toFixed(decimals);
+}
+function formatDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function formatDateShort(d) {
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+function escapeHtml(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>

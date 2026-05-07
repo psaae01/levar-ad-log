@@ -575,7 +575,15 @@ function parseFile(file) {
         rawRows = XLSX.utils.sheet_to_json(ws);
       }
       const platform = detectPlatform(rawRows, file.name);
+      if (platform === 'unknown') {
+        showUploadStatus('err', `${file.name} — 플랫폼을 감지할 수 없습니다. 파일 컬럼명을 확인해주세요.`);
+        return;
+      }
       const parsed = platformParse[platform](rawRows, file.name);
+      if (!parsed.length) {
+        showUploadStatus('err', `${file.name} — ${PLATFORM_LABELS[platform]} 감지됐으나 유효한 데이터가 없습니다.`);
+        return;
+      }
       uploadParsed.push({ platform, file: file.name, rows: parsed });
       renderParsedCard(platform, file.name, parsed, uploadParsed.length - 1);
       showUploadStatus('ok', `${file.name} — ${PLATFORM_LABELS[platform]} 감지 · ${parsed.length}행 파싱 완료`);
@@ -624,7 +632,9 @@ const platformParse = {
     const byDateCamp = {};
     rows.forEach(r => {
       let date = String(r['일별']||r['날짜']||'').replace(/\./g,'-').replace(/-$/,'').trim();
-      if (date.length === 9) date = date; // 2026-02-01 형식 맞추기
+      // YYYY-M-D → YYYY-MM-DD 정규화
+      const m = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) date = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
       const camp = r['캠페인']||'';
       if (!date || !camp) return;
       const key = `${date}__${camp}`;
@@ -690,7 +700,11 @@ function extractDateFromFilename(filename) {
   // 방법2: 한글 날짜 (예: 2026년 1월 1일 또는 2026년_1월_1일)
   const m2 = filename.match(/(\d{4})년.{0,3}(\d{1,2})월.{0,3}(\d{1,2})일/);
   if (m2) return `${m2[1]}-${String(m2[2]).padStart(2,'0')}-${String(m2[3]).padStart(2,'0')}`;
-  return new Date().toISOString().slice(0,10);
+  // 방법3: YYYYMMDD 형식 (예: 29cm_20260101.csv)
+  const m3 = filename.match(/(\d{4})(\d{2})(\d{2})/);
+  if (m3) return `${m3[1]}-${m3[2]}-${m3[3]}`;
+  // 날짜를 못 찾으면 명확히 에러를 던짐 (오늘 날짜로 fallback 하지 않음 — 시계열 망가짐 방지)
+  throw new Error(`파일명에서 날짜를 찾을 수 없습니다: "${filename}". 파일명에 날짜를 포함해주세요 (예: 29cm_2026-01-01.csv)`);
 }
 
 function makeRow(date, div, media, camp, ad, imp, click, conv, sales) {
@@ -789,8 +803,14 @@ async function sendRows(rows, source) {
     });
     const data = await res.json();
     if (data.ok) {
-      addLog('ok', `${source} — ${rows.length}행 저장 완료`, rows.length);
-      toast(`✅ ${rows.length}행 저장됐어요`, 'g');
+      // v3.1 응답: { ok, added, updated }
+      const added = data.added ?? rows.length;
+      const updated = data.updated ?? 0;
+      const msg = updated > 0
+        ? `신규 ${added}행 · 업데이트 ${updated}행`
+        : `${added}행 저장 완료`;
+      addLog('ok', `${source} — ${msg}`, rows.length);
+      toast(`✅ ${msg}`, 'g');
       statCount++; statRows += rows.length;
       updateStats();
     } else throw new Error(data.error||'오류');

@@ -627,7 +627,10 @@ const platformParse = {
       byDateCamp[key].conv  += parseNum(r['결과']||r['전환수']||0);
       byDateCamp[key].sales += parseNum(r['결과 값']||r['전환매출']||0);
     });
-    return Object.values(byDateCamp).map(r => makeRow(r.date, '자사몰(메타)', '메타', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
+    return Object.values(byDateCamp)
+      // 광고비/노출/클릭/전환/매출 중 하나라도 0보다 큰 행만 (모든 값 0인 빈 행 제외)
+      .filter(r => r.ad > 0 || r.imp > 0 || r.click > 0 || r.conv > 0 || r.sales > 0)
+      .map(r => makeRow(r.date, '자사몰(메타)', '메타', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
   },
 
   // 네이버: 날짜×캠페인×광고그룹 → 날짜×캠페인 합산
@@ -656,7 +659,10 @@ const platformParse = {
         if (r.ad === 0) r.ad = 66000;
       }
     });
-    return Object.values(byDateCamp).map(r => makeRow(r.date, '자사몰(네이버SA)', '네이버', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
+    return Object.values(byDateCamp)
+      // 광고비/노출/클릭/전환/매출 중 하나라도 0보다 큰 행만
+      .filter(r => r.ad > 0 || r.imp > 0 || r.click > 0 || r.conv > 0 || r.sales > 0)
+      .map(r => makeRow(r.date, '자사몰(네이버SA)', '네이버', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
   },
 
   // 29CM: 캠페인별(하루치) or 일별 모두 지원
@@ -664,8 +670,17 @@ const platformParse = {
     // 캠페인별 파일 (날짜 없음 → 파일명에서 추출)
     if (!rows[0] || !rows[0]['날짜']) {
       const date = extractDateFromFilename(filename);
-      // 캠페인명만 있으면 모두 포함 (0원이어도 일자별 기록 유지)
-      const active = rows.filter(r => r['캠페인']);
+      // 캠페인 이름 있고, 광고비/노출/클릭/전환/매출 중 하나라도 있으면 행 만들기
+      // (광고비 0인데 전환/매출 있는 케이스: 정액제, 잔여 노출 등)
+      const active = rows.filter(r => {
+        if (!r['캠페인']) return false;
+        const ad = parseNum(r['집행 광고비']);
+        const imp = parseNum(r['노출 수']);
+        const click = parseNum(r['클릭 수']);
+        const conv = parseNum(r['판매 수']);
+        const sales = parseNum(r['매출']);
+        return ad > 0 || imp > 0 || click > 0 || conv > 0 || sales > 0;
+      });
       return active.map(r => {
         return makeRow(date, '입점몰(성장솔루션)', '29CM',
           r['캠페인']||'',
@@ -686,8 +701,16 @@ const platformParse = {
   musinsa(rows, filename) {
     if (!rows[0] || !rows[0]['날짜']) {
       const date = extractDateFromFilename(filename);
-      // 캠페인명만 있으면 모두 포함 (0원이어도 일자별 기록 유지)
-      const activeMu = rows.filter(r => r['캠페인']);
+      // 캠페인 이름 있고, 광고비/노출/클릭/전환/매출 중 하나라도 있으면 행 만들기
+      const activeMu = rows.filter(r => {
+        if (!r['캠페인']) return false;
+        const ad = parseNum(r['집행 광고비']);
+        const imp = parseNum(r['노출 수']);
+        const click = parseNum(r['클릭 수']);
+        const conv = parseNum(r['판매 수']);
+        const sales = parseNum(r['매출']);
+        return ad > 0 || imp > 0 || click > 0 || conv > 0 || sales > 0;
+      });
       return activeMu.map(r => {
         return makeRow(date, '입점몰(성장솔루션)', '무신사',
           r['캠페인']||'',

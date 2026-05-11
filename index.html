@@ -137,9 +137,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--paper); color:
 .status-msg.info { background: var(--blue-bg); color: var(--blue); display: block; }
 
 /* PREVIEW TABLE */
-.preview-wrap { overflow-x: auto; margin-top: 14px; border-radius: 5px; border: 1px solid var(--ink-15); }
+.preview-wrap { overflow-x: auto; max-height: 360px; overflow-y: auto; margin-top: 14px; border-radius: 5px; border: 1px solid var(--ink-15); }
 .ptable { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
-.ptable th { padding: 8px 12px; background: var(--paper-2); text-align: left; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-50); border-bottom: 1px solid var(--ink-15); }
+.ptable th { padding: 8px 12px; background: var(--paper-2); text-align: left; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-50); border-bottom: 1px solid var(--ink-15); position: sticky; top: 0; z-index: 1; }
 .ptable td { padding: 8px 12px; border-bottom: 1px solid var(--ink-15); font-family: 'DM Mono', monospace; font-size: 11px; }
 .ptable tr:last-child td { border-bottom: none; }
 .ptable tr:hover td { background: var(--paper); }
@@ -609,12 +609,15 @@ function detectPlatform(rows, filename) {
 
 // ── 플랫폼별 파서 ──
 const platformParse = {
-  // 메타: 캠페인×날짜×광고소재 → 날짜×캠페인 합산
+  // 메타: 캠페인×날짜×광고소재(광고 이름) 별로 분리
   meta(rows) {
     const byDateCamp = {};
     rows.forEach(r => {
       const date = String(r['일']||r['날짜']||'').slice(0,10);
-      const camp = r['캠페인 이름']||r['캠페인명']||'';
+      const campName = r['캠페인 이름']||r['캠페인명']||'';
+      const adName = r['광고 이름']||r['광고이름']||'';
+      // 캠페인 이름 + 광고 이름 합치기 (광고 이름 없으면 캠페인 이름만)
+      const camp = adName ? `${campName} / ${adName}` : campName;
       if (!date || date.length < 8) return;
       const key = `${date}__${camp}`;
       if (!byDateCamp[key]) byDateCamp[key] = { date, camp, ad:0, imp:0, click:0, conv:0, sales:0 };
@@ -737,8 +740,8 @@ function renderParsedCard(platform, filename, rows, idx) {
   const dates = rows.map(r=>r.날짜).filter(Boolean).sort();
   const dateRange = dates.length ? `${dates[0]} ~ ${dates[dates.length-1]}` : '—';
 
-  // 미리보기 행 (최대 8개)
-  const previewRows = rows.slice(0,8).map(r=>`
+  // 미리보기 행 (전체 표시 - 영역 자체에 스크롤 있음)
+  const previewRows = rows.map(r=>`
     <tr>
       <td>${r.날짜}</td>
       <td>${r.캠페인명||'—'}</td>
@@ -774,7 +777,6 @@ function renderParsedCard(platform, filename, rows, idx) {
         <tbody id="pcard-body-${idx}">${previewRows}</tbody>
       </table>
     </div>
-    ${rows.length > 8 ? `<div style="text-align:center;padding:10px;font-size:11px;color:var(--ink-50)">...외 ${rows.length-8}행</div>` : ''}
   </div>`;
   container.insertAdjacentHTML('beforeend', html);
 }

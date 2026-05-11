@@ -631,6 +631,7 @@ const platformParse = {
   },
 
   // 네이버: 날짜×캠페인×광고그룹 → 날짜×캠페인 합산
+  // 특이사항: 브랜드검색/신제품검색은 정액제라 일별 광고비 0으로 나옴 → 66,000원 고정 적용
   naver(rows) {
     const byDateCamp = {};
     rows.forEach(r => {
@@ -639,14 +640,21 @@ const platformParse = {
       const m = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
       if (m) date = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
       const camp = r['캠페인']||'';
+      const campType = r['캠페인유형']||'';
       if (!date || !camp) return;
       const key = `${date}__${camp}`;
-      if (!byDateCamp[key]) byDateCamp[key] = { date, camp, ad:0, imp:0, click:0, conv:0, sales:0 };
+      if (!byDateCamp[key]) byDateCamp[key] = { date, camp, campType, ad:0, imp:0, click:0, conv:0, sales:0 };
       byDateCamp[key].ad    += parseNum(r['총비용']||0);
       byDateCamp[key].imp   += parseNum(r['노출수']||0);
       byDateCamp[key].click += parseNum(r['클릭수']||0);
       byDateCamp[key].conv  += parseNum(r['구매완료 전환수']||0);
       byDateCamp[key].sales += parseNum(r['구매완료 전환매출액(원)']||0);
+    });
+    // 브랜드검색/신제품검색은 정액제 (월 66,000원) → 광고비 0이면 66,000원 고정
+    Object.values(byDateCamp).forEach(r => {
+      if (r.campType.includes('브랜드검색') || r.campType.includes('신제품검색')) {
+        if (r.ad === 0) r.ad = 66000;
+      }
     });
     return Object.values(byDateCamp).map(r => makeRow(r.date, '자사몰(네이버SA)', '네이버', r.camp, r.ad, r.imp, r.click, r.conv, r.sales));
   },
@@ -656,7 +664,8 @@ const platformParse = {
     // 캠페인별 파일 (날짜 없음 → 파일명에서 추출)
     if (!rows[0] || !rows[0]['날짜']) {
       const date = extractDateFromFilename(filename);
-      const active = rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0);
+      // 캠페인명만 있으면 모두 포함 (0원이어도 일자별 기록 유지)
+      const active = rows.filter(r => r['캠페인']);
       return active.map(r => {
         return makeRow(date, '입점몰(성장솔루션)', '29CM',
           r['캠페인']||'',
@@ -677,7 +686,8 @@ const platformParse = {
   musinsa(rows, filename) {
     if (!rows[0] || !rows[0]['날짜']) {
       const date = extractDateFromFilename(filename);
-      const activeMu = rows.filter(r => r['캠페인'] && parseNum(r['집행 광고비']) > 0);
+      // 캠페인명만 있으면 모두 포함 (0원이어도 일자별 기록 유지)
+      const activeMu = rows.filter(r => r['캠페인']);
       return activeMu.map(r => {
         return makeRow(date, '입점몰(성장솔루션)', '무신사',
           r['캠페인']||'',

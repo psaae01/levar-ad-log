@@ -109,6 +109,15 @@
   .sidebar-item:hover { background: var(--bg-hover); color: var(--text); }
   .sidebar-item.active { background: var(--bg); color: var(--text); font-weight: 500; }
   .sidebar-item svg { width: 13px; height: 13px; opacity: 0.8; }
+  .media-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sidebar-item.sidebar-group { justify-content: flex-start; }
+  .sidebar-item.sidebar-group .caret { width: 10px; height: 10px; margin-left: auto; transition: transform 0.2s; opacity: 0.6; }
+  .sidebar-item.sidebar-group.open .caret { transform: rotate(180deg); }
+  .sidebar-sub { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; margin-left: 14px; border-left: 1px solid var(--border); }
+  .sidebar-sub.open { max-height: 100px; }
+  .sidebar-subitem { display: block; padding: 6px 10px 6px 18px; font-size: 11px; font-weight: 400; color: var(--text-muted); cursor: pointer; border: none; background: none; font-family: inherit; width: 100%; text-align: left; border-radius: 4px; transition: all 0.15s; }
+  .sidebar-subitem:hover { color: var(--text); }
+  .sidebar-subitem.active { color: var(--text); font-weight: 500; }
   .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border-light); }
   .sidebar-info { font-size: 10px; color: var(--text-faint); font-weight: 400; line-height: 1.5; }
 
@@ -329,13 +338,6 @@
           </svg>
           매출 추이
         </button>
-        <button class="sidebar-item" data-jump="media">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-            <circle cx="8" cy="8" r="5"/>
-            <path d="M 8 3 L 8 8 L 12 11"/>
-          </svg>
-          매체 분석
-        </button>
         <button class="sidebar-item" data-jump="campaigns">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
             <path d="M 2 11 L 2 14 L 5 14"/>
@@ -343,6 +345,38 @@
             <line x1="2" y1="14" x2="14" y2="2"/>
           </svg>
           캠페인
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">매체별</div>
+      <nav class="sidebar-menu">
+        <button class="sidebar-item" data-filter="메타|자사몰(메타)">
+          <span class="media-dot" style="background:var(--media-meta);"></span>
+          메타 (자사몰)
+        </button>
+        <button class="sidebar-item sidebar-group" data-toggle="g-29cm" data-filter="29CM|all">
+          <span class="media-dot" style="background:var(--media-29CM);"></span>
+          29CM
+          <svg class="caret" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="4,6 8,10 12,6"/></svg>
+        </button>
+        <div class="sidebar-sub" id="g-29cm">
+          <button class="sidebar-subitem" data-filter="29CM|입점몰(성장솔루션)">성장솔루션</button>
+          <button class="sidebar-subitem" data-filter="29CM|입점몰(메타)">메타광고</button>
+        </div>
+        <button class="sidebar-item sidebar-group" data-toggle="g-musinsa" data-filter="무신사|all">
+          <span class="media-dot" style="background:var(--media-musinsa);"></span>
+          무신사
+          <svg class="caret" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="4,6 8,10 12,6"/></svg>
+        </button>
+        <div class="sidebar-sub" id="g-musinsa">
+          <button class="sidebar-subitem" data-filter="무신사|입점몰(성장솔루션)">성장솔루션</button>
+          <button class="sidebar-subitem" data-filter="무신사|입점몰(메타)">메타광고</button>
+        </div>
+        <button class="sidebar-item" data-filter="네이버|자사몰(네이버SA)">
+          <span class="media-dot" style="background:var(--media-naver);"></span>
+          네이버
         </button>
       </nav>
     </div>
@@ -432,8 +466,8 @@
       <!-- 매체 필터 -->
       <div class="media-filter-bar">
         <button class="media-pill active" data-media="all">전체</button>
-        <button class="media-pill" data-media="29CM">29CM</button>
         <button class="media-pill" data-media="메타">메타</button>
+        <button class="media-pill" data-media="29CM">29CM</button>
         <button class="media-pill" data-media="무신사">무신사</button>
         <button class="media-pill" data-media="네이버">네이버</button>
       </div>
@@ -575,6 +609,7 @@ const MEDIA_ORDER = ['29CM', '메타', '무신사', '네이버'];
 
 let allData = [];
 let currentMedia = 'all';
+let currentDiv = 'all';
 let currentRange = 'all';
 let customStart = null;
 let customEnd = null;
@@ -627,6 +662,7 @@ async function fetchData() {
 function getFilteredData() {
   let data = allData;
   if (currentMedia !== 'all') data = data.filter(r => r.media === currentMedia);
+  if (currentDiv !== 'all') data = data.filter(r => r.div === currentDiv);
   if (currentRange === 'all') return data;
   const range = getDateRange(currentRange);
   if (!range) return data;
@@ -655,6 +691,7 @@ function getDateRange(rangeKey) {
 function getPreviousData() {
   let data = allData;
   if (currentMedia !== 'all') data = data.filter(r => r.media === currentMedia);
+  if (currentDiv !== 'all') data = data.filter(r => r.div === currentDiv);
   if (currentRange === 'all') return [];
   const range = getDateRange(currentRange);
   if (!range) return [];
@@ -696,6 +733,15 @@ function render() {
 function updateGreeting(data) {
   const sub = document.getElementById('greetingSub');
   let mediaText = currentMedia === 'all' ? '전체 매체' : currentMedia;
+  if (currentDiv !== 'all') {
+    // 입점몰(성장솔루션) → 성장솔루션, 입점몰(메타) → 메타광고, 자사몰(메타) → 자사몰
+    let divLabel = currentDiv;
+    if (currentDiv === '입점몰(성장솔루션)') divLabel = '성장솔루션';
+    else if (currentDiv === '입점몰(메타)') divLabel = '메타광고';
+    else if (currentDiv === '자사몰(메타)') divLabel = '자사몰';
+    else if (currentDiv === '자사몰(네이버SA)') divLabel = '자사몰';
+    mediaText = `${mediaText} · ${divLabel}`;
+  }
   let rangeText = '전체 기간';
   if (currentRange === 'today') rangeText = '오늘';
   else if (currentRange === '7') rangeText = '최근 7일';
@@ -921,11 +967,14 @@ function renderMediaBars(data) {
 
 function renderDailyTable(data) {
   const tbody = document.getElementById('dailyTable');
-  const groupBy = currentMedia === 'all' ? 'date_media' : 'date';
+  // 매체 전체 모드 → 날짜+매체로 그룹 / 매체 선택 시 → 날짜+구분으로 그룹 (구분 차이 보이게)
+  const groupBy = currentMedia === 'all' ? 'date_media' : 'date_div';
   const grouped = {};
   data.forEach(r => {
-    const key = groupBy === 'date_media' ? `${r.date}|${r.media}` : r.date;
-    if (!grouped[key]) grouped[key] = { date: r.date, media: r.media, spend: 0, sales: 0, conv: 0 };
+    const key = groupBy === 'date_media'
+      ? `${r.date}|${r.media}`
+      : `${r.date}|${r.div}`;
+    if (!grouped[key]) grouped[key] = { date: r.date, media: r.media, div: r.div || '', spend: 0, sales: 0, conv: 0 };
     grouped[key].spend += r.spend || 0;
     grouped[key].sales += r.sales || 0;
     grouped[key].conv += r.conv || 0;
@@ -937,7 +986,19 @@ function renderDailyTable(data) {
     const roas = r.spend > 0 ? (r.sales / r.spend * 100) : 0;
     const tagClass = getTagClass(r.media);
     const dateStr = r.date.slice(5).replace('-', '.');
-    html += `<tr><td>${dateStr}</td><td>${currentMedia === 'all' ? `<span class="media-tag ${tagClass}">${r.media}</span>` : '<span class="muted">—</span>'}</td><td class="right">${formatCurrencyShort(r.spend)}</td><td class="right">${formatCurrencyShort(r.sales)}</td><td class="right">${r.conv}</td><td class="right">${formatNumber(roas, 0)}%</td></tr>`;
+    // 매체 표시: 전체 모드 → 매체명만, 필터 모드 → 구분만 (예: 성장솔루션 / 메타광고 / 자사몰)
+    let mediaCell;
+    if (currentMedia === 'all') {
+      mediaCell = `<span class="media-tag ${tagClass}">${r.media}</span>`;
+    } else {
+      let divLabel = r.div || r.media;
+      if (r.div === '입점몰(성장솔루션)') divLabel = '성장솔루션';
+      else if (r.div === '입점몰(메타)') divLabel = '메타광고';
+      else if (r.div === '자사몰(메타)') divLabel = '자사몰';
+      else if (r.div === '자사몰(네이버SA)') divLabel = '자사몰';
+      mediaCell = `<span class="media-tag ${tagClass}">${divLabel}</span>`;
+    }
+    html += `<tr><td>${dateStr}</td><td>${mediaCell}</td><td class="right">${formatCurrencyShort(r.spend)}</td><td class="right">${formatCurrencyShort(r.sales)}</td><td class="right">${r.conv}</td><td class="right">${formatNumber(roas, 0)}%</td></tr>`;
   });
   tbody.innerHTML = html;
 }
@@ -1044,6 +1105,10 @@ document.querySelectorAll('.media-pill').forEach(btn => {
     document.querySelectorAll('.media-pill').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentMedia = btn.dataset.media;
+    currentDiv = 'all';  // 상단 매체 필터 사용 시 div 필터는 초기화
+    // 사이드바 active 정리
+    document.querySelectorAll('.sidebar-subitem').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item[data-filter]').forEach(i => i.classList.remove('active'));
     render();
   });
 });
@@ -1080,6 +1145,7 @@ document.getElementById('themeBtn').addEventListener('click', () => {
 document.querySelectorAll('.sidebar-item[data-jump]').forEach(item => {
   item.addEventListener('click', () => {
     document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.sidebar-subitem').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
     const target = item.dataset.jump;
     if (target === 'top') {
@@ -1092,6 +1158,44 @@ document.querySelectorAll('.sidebar-item[data-jump]').forEach(item => {
     else if (target === 'media') el = document.getElementById('mediaPanel');
     else if (target === 'campaigns') el = document.getElementById('campaignList');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// 매체별 펼침/접힘 토글 (필터 핸들러와 함께 작동)
+document.querySelectorAll('.sidebar-item[data-toggle]').forEach(item => {
+  item.addEventListener('click', () => {
+    const id = item.dataset.toggle;
+    const sub = document.getElementById(id);
+    if (sub) {
+      sub.classList.add('open');
+      item.classList.add('open');
+    }
+  });
+});
+
+// 매체별 필터 적용 (사이드바 → 필터바 동기화)
+function applyMediaFilter(filterStr) {
+  const parts = filterStr.split('|');
+  const media = parts[0] || 'all';
+  const div = parts[1] || 'all';
+  currentMedia = media === 'all' ? 'all' : media;
+  currentDiv = (div === 'all' || !div) ? 'all' : div;
+  // 상단 매체 필터바 동기화
+  document.querySelectorAll('.media-pill').forEach(p => p.classList.remove('active'));
+  const targetPill = document.querySelector(`.media-pill[data-media="${currentMedia}"]`);
+  if (targetPill) targetPill.classList.add('active');
+  else document.querySelector(`.media-pill[data-media="all"]`)?.classList.add('active');
+  render();
+}
+
+document.querySelectorAll('.sidebar-item[data-filter], .sidebar-subitem[data-filter]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.sidebar-subitem').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    applyMediaFilter(item.dataset.filter);
+    // 상단으로 스크롤
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
 

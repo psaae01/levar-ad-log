@@ -119,6 +119,14 @@
   .sidebar-subitem:hover { color: var(--text); }
   .sidebar-subitem.active { color: var(--text); font-weight: 500; }
   .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border-light); }
+  .vat-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0 10px; margin-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+  .vat-toggle-label { display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+  .vat-toggle-title { font-size: 10px; color: var(--text-secondary); font-weight: 500; }
+  .vat-toggle-hint { font-size: 9px; color: var(--text-faint); }
+  .vat-toggle { position: relative; width: 28px; height: 16px; border-radius: 999px; background: var(--border-strong); border: none; cursor: pointer; padding: 0; transition: background-color 0.2s; flex-shrink: 0; }
+  .vat-toggle[aria-checked="true"] { background: var(--bg-button); }
+  .vat-toggle-thumb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #FFF; transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+  .vat-toggle[aria-checked="true"] .vat-toggle-thumb { transform: translateX(12px); }
   .sidebar-info { font-size: 10px; color: var(--text-faint); font-weight: 400; line-height: 1.5; }
 
   /* ============ 메인 콘텐츠 ============ */
@@ -161,10 +169,15 @@
   .custom-range-hint.error { color: var(--color-down); }
 
   /* ============ 매체 필터 ============ */
-  .media-filter-bar { display: flex; align-items: center; gap: 4px; background: var(--bg-card); padding: 4px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 16px; width: fit-content; }
+  .media-filter-wrap { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .media-filter-bar { display: flex; align-items: center; gap: 4px; background: var(--bg-card); padding: 4px; border-radius: 6px; border: 1px solid var(--border); width: fit-content; }
   .media-pill { background: transparent; border: none; padding: 6px 14px; font-family: inherit; font-size: 11px; font-weight: 400; color: var(--text-muted); cursor: pointer; border-radius: 4px; transition: all 0.15s; }
   .media-pill:hover { color: var(--text); }
   .media-pill.active { background: var(--bg); color: var(--text); font-weight: 400; }
+  .media-sub-bar { display: flex; align-items: center; gap: 4px; padding: 0 4px; width: fit-content; animation: fadeIn 0.2s ease; }
+  .media-sub-pill { background: transparent; border: 1px solid var(--border); padding: 5px 12px; font-family: inherit; font-size: 10px; font-weight: 400; color: var(--text-muted); cursor: pointer; border-radius: 4px; transition: all 0.15s; }
+  .media-sub-pill:hover { color: var(--text); border-color: var(--text-faintest); }
+  .media-sub-pill.active { background: var(--bg-button); color: var(--bg-button-text); border-color: var(--bg-button); font-weight: 500; }
 
   /* ============ KPI 카드 ============ */
   .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
@@ -274,6 +287,83 @@
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .kpi-value { font-size: 18px; }
   }
+  /* ============ 광고 가이드 모달 ============ */
+  .guide-modal { display: none; position: fixed; inset: 0; z-index: 200; }
+  .guide-modal.open { display: block; }
+  .guide-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); animation: fadeIn 0.2s ease; }
+  .guide-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(680px, 100%); background: var(--bg); display: flex; flex-direction: column; box-shadow: -8px 0 32px rgba(0,0,0,0.12); animation: slideInRight 0.25s ease; }
+  @keyframes slideInRight { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .guide-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 28px 32px 20px; border-bottom: 1px solid var(--border); }
+  .guide-title { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; color: var(--text); }
+  .guide-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .guide-close { background: transparent; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 6px; cursor: pointer; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .guide-close:hover { color: var(--text); border-color: var(--text-faintest); }
+  .guide-close svg { width: 14px; height: 14px; }
+  .guide-body { flex: 1; overflow-y: auto; padding: 24px 32px 80px; }
+  .guide-notice { background: var(--bg-card); border: 1px dashed var(--border-strong); border-radius: 6px; padding: 12px 16px; font-size: 11px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 32px; }
+  .guide-notice b { color: var(--text); font-weight: 500; }
+  .guide-section { margin-bottom: 48px; }
+  .guide-section-num { font-size: 10px; letter-spacing: 0.2em; color: var(--text-faint); font-weight: 500; margin-bottom: 6px; }
+  .guide-h2 { font-size: 18px; font-weight: 500; color: var(--text); margin-bottom: 8px; letter-spacing: -0.01em; }
+  .guide-p { font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.65; }
+
+  /* 지표 카드 */
+  .guide-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .guide-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .guide-card-label { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .guide-card-tag { font-size: 9px; color: var(--text-muted); background: var(--bg); padding: 2px 6px; border-radius: 3px; font-weight: 400; letter-spacing: 0.02em; }
+  .guide-card-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px; }
+  .guide-card-desc b { color: var(--text); font-weight: 500; }
+  .guide-card-formula { font-size: 10px; color: var(--text-muted); background: var(--bg); padding: 6px 10px; border-radius: 4px; margin-bottom: 6px; font-family: 'SF Mono', Menlo, monospace; letter-spacing: -0.01em; }
+  .guide-card-eg { font-size: 10px; color: var(--text-faint); line-height: 1.5; }
+
+  /* 매체 카드 */
+  .guide-media-cards { display: flex; flex-direction: column; gap: 10px; }
+  .guide-media-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--text); border-radius: 6px; padding: 14px 18px; }
+  .guide-media-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .guide-media-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .guide-media-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .guide-media-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 10px; }
+  .guide-media-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 11px; border-top: 1px solid var(--border-light); }
+  .guide-media-row:first-of-type { border-top: none; }
+  .guide-media-row span { color: var(--text-muted); }
+  .guide-media-row b { color: var(--text); font-weight: 400; text-align: right; }
+
+  /* 시나리오 */
+  .guide-scenario { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; }
+  .guide-scenario-title { font-size: 11px; font-weight: 500; color: var(--text); margin-bottom: 14px; letter-spacing: 0.02em; }
+  .guide-scenario-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .guide-scenario-day { flex: 1; background: var(--bg); border-radius: 6px; padding: 12px 14px; text-align: center; }
+  .guide-scenario-date { font-size: 9px; color: var(--text-muted); letter-spacing: 0.1em; margin-bottom: 6px; }
+  .guide-scenario-event { font-size: 12px; color: var(--text); font-weight: 400; }
+  .guide-arrow { color: var(--text-faint); font-size: 16px; }
+  .guide-scenario-result { font-size: 11px; color: var(--text-secondary); line-height: 1.7; padding-top: 12px; border-top: 1px solid var(--border-light); }
+  .guide-scenario-result b { color: var(--text); font-weight: 500; }
+
+  /* 경고박스 */
+  .guide-warning { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; }
+  .guide-warning-title { font-size: 11px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .guide-warning-body { font-size: 11px; color: var(--text-secondary); line-height: 1.7; }
+  .guide-warning-body b { color: var(--text); font-weight: 500; }
+
+  /* 변화율 비교 */
+  .guide-compare { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .guide-compare-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .guide-compare-label { font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+  .guide-compare-target { font-size: 11px; color: var(--text); margin-bottom: 8px; }
+  .guide-compare-unit { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+  .guide-compare-unit b { color: var(--text); font-weight: 500; }
+  .guide-compare-eg { font-size: 10px; color: var(--text-faint); line-height: 1.6; }
+
+  .guide-tip { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; font-size: 11px; color: var(--text-secondary); line-height: 1.7; }
+  .guide-tip b { color: var(--text); font-weight: 500; }
+
+  @media (max-width: 720px) {
+    .guide-panel { width: 100%; }
+    .guide-cards { grid-template-columns: 1fr; }
+    .guide-compare { grid-template-columns: 1fr; }
+    .guide-header, .guide-body { padding-left: 20px; padding-right: 20px; }
+  }
 </style>
 </head>
 <body>
@@ -310,46 +400,6 @@
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-section-title">메인</div>
-      <nav class="sidebar-menu">
-        <button class="sidebar-item active" data-jump="top">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-            <rect x="2" y="2" width="5" height="6"/>
-            <rect x="9" y="2" width="5" height="3"/>
-            <rect x="9" y="7" width="5" height="7"/>
-            <rect x="2" y="10" width="5" height="4"/>
-          </svg>
-          대시보드
-        </button>
-        <button class="sidebar-item" data-jump="kpi">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-            <line x1="2" y1="13" x2="14" y2="13"/>
-            <rect x="3" y="9" width="2" height="4"/>
-            <rect x="7" y="6" width="2" height="7"/>
-            <rect x="11" y="3" width="2" height="10"/>
-          </svg>
-          핵심 지표
-        </button>
-        <button class="sidebar-item" data-jump="chart">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-            <polyline points="2,12 5,8 9,10 14,3"/>
-            <circle cx="2" cy="12" r="1" fill="currentColor"/>
-            <circle cx="14" cy="3" r="1" fill="currentColor"/>
-          </svg>
-          매출 추이
-        </button>
-        <button class="sidebar-item" data-jump="campaigns">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-            <path d="M 2 11 L 2 14 L 5 14"/>
-            <path d="M 14 5 L 14 2 L 11 2"/>
-            <line x1="2" y1="14" x2="14" y2="2"/>
-          </svg>
-          캠페인
-        </button>
-      </nav>
-    </div>
-
-    <div class="sidebar-section">
       <div class="sidebar-section-title">매체별</div>
       <nav class="sidebar-menu">
         <button class="sidebar-item" data-filter="메타|자사몰(메타)">
@@ -374,16 +424,30 @@
           <button class="sidebar-subitem" data-filter="무신사|입점몰(성장솔루션)">성장솔루션</button>
           <button class="sidebar-subitem" data-filter="무신사|입점몰(메타)">메타광고</button>
         </div>
-        <button class="sidebar-item" data-filter="네이버|자사몰(네이버SA)">
+        <button class="sidebar-item sidebar-group" data-toggle="g-naver" data-filter="네이버|all">
           <span class="media-dot" style="background:var(--media-naver);"></span>
           네이버
+          <svg class="caret" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><polyline points="4,6 8,10 12,6"/></svg>
         </button>
+        <div class="sidebar-sub" id="g-naver">
+          <button class="sidebar-subitem" data-filter="네이버|cam:브랜드검색">브랜드검색</button>
+          <button class="sidebar-subitem" data-filter="네이버|cam:쇼핑검색">쇼핑검색</button>
+          <button class="sidebar-subitem" data-filter="네이버|cam:파워링크">파워링크</button>
+        </div>
       </nav>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-title">도구</div>
       <nav class="sidebar-menu">
+        <button class="sidebar-item" id="guideBtn">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+            <circle cx="8" cy="8" r="6"/>
+            <path d="M 6.5 6 a 1.5 1.5 0 1 1 2 1.3 c -0.5 0.25 -0.5 0.7 -0.5 1.2"/>
+            <circle cx="8" cy="11.5" r="0.5" fill="currentColor"/>
+          </svg>
+          광고 가이드
+        </button>
         <a class="sidebar-item" href="https://psaae01.github.io/levar-ad-log/" target="_blank">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
             <rect x="3" y="3" width="10" height="10"/>
@@ -404,6 +468,15 @@
     </div>
 
     <div class="sidebar-footer">
+      <div class="vat-toggle-row">
+        <label class="vat-toggle-label" for="vatToggle">
+          <span class="vat-toggle-title">VAT 보정</span>
+          <span class="vat-toggle-hint">네이버 광고비 정규화</span>
+        </label>
+        <button class="vat-toggle" id="vatToggle" role="switch" aria-checked="true">
+          <span class="vat-toggle-thumb"></span>
+        </button>
+      </div>
       <div class="sidebar-info" id="sidebarInfo">—</div>
     </div>
   </aside>
@@ -420,7 +493,6 @@
         </div>
         <div class="controls">
           <div class="date-pill-group">
-            <button class="date-pill" data-range="today">오늘</button>
             <button class="date-pill" data-range="7">7일</button>
             <button class="date-pill" data-range="thisMonth">이번달</button>
             <button class="date-pill active" data-range="all">전체</button>
@@ -464,12 +536,17 @@
       </div>
 
       <!-- 매체 필터 -->
-      <div class="media-filter-bar">
-        <button class="media-pill active" data-media="all">전체</button>
-        <button class="media-pill" data-media="메타">메타</button>
-        <button class="media-pill" data-media="29CM">29CM</button>
-        <button class="media-pill" data-media="무신사">무신사</button>
-        <button class="media-pill" data-media="네이버">네이버</button>
+      <div class="media-filter-wrap">
+        <div class="media-filter-bar">
+          <button class="media-pill active" data-media="all">전체</button>
+          <button class="media-pill" data-media="메타">메타</button>
+          <button class="media-pill" data-media="29CM">29CM</button>
+          <button class="media-pill" data-media="무신사">무신사</button>
+          <button class="media-pill" data-media="네이버">네이버</button>
+        </div>
+        <div class="media-sub-bar" id="mediaSubBar" style="display:none;">
+          <button class="media-sub-pill active" data-sub="all">전체</button>
+        </div>
       </div>
 
       <!-- KPI 카드 4개 (메인) -->
@@ -592,6 +669,229 @@
   </main>
 </div>
 
+<!-- ============ 광고 가이드 모달 ============ -->
+<div class="guide-modal" id="guideModal">
+  <div class="guide-backdrop" id="guideBackdrop"></div>
+  <div class="guide-panel">
+    <div class="guide-header">
+      <div>
+        <div class="guide-title">광고 가이드</div>
+        <div class="guide-subtitle">대시보드 지표와 매체별 특징을 쉽게 정리했어요</div>
+      </div>
+      <button class="guide-close" id="guideClose" aria-label="닫기">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="4" y1="4" x2="12" y2="12"/>
+          <line x1="12" y1="4" x2="4" y2="12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="guide-body">
+      <div class="guide-notice">
+        본 가이드는 <b>2026년 5월 기준 LEVAR 실제 매체 설정</b>으로 작성됐어요. 매체 정책이 바뀌면 내용도 달라질 수 있으니 참고용으로 봐주세요.
+      </div>
+
+      <!-- 섹션 1: 지표 설명 -->
+      <section class="guide-section">
+        <div class="guide-section-num">01</div>
+        <h2 class="guide-h2">지표 한눈에 보기</h2>
+        <p class="guide-p">대시보드에 나오는 숫자들이 무슨 뜻인지 가볍게 정리했어요.</p>
+
+        <div class="guide-cards">
+          <div class="guide-card">
+            <div class="guide-card-label">노출 (Impression)</div>
+            <div class="guide-card-desc">광고가 화면에 <b>몇 번 보여졌는지</b></div>
+            <div class="guide-card-eg">예: 인스타 피드 스크롤하다가 광고가 지나가면 1번 노출</div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-label">클릭 (Click)</div>
+            <div class="guide-card-desc">광고를 <b>몇 번 눌렀는지</b></div>
+            <div class="guide-card-eg">예: 광고 봤다가 "오 이거 뭐지?" 하고 누르면 1번 클릭</div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-label">전환 (Conversion)</div>
+            <div class="guide-card-desc">광고를 보고 결국 <b>구매한 횟수</b></div>
+            <div class="guide-card-eg">LEVAR는 "구매 완료"만 전환으로 잡아요 (장바구니 추가는 X)</div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-label">CTR <span class="guide-card-tag">클릭률</span></div>
+            <div class="guide-card-desc">노출 중에 <b>몇 %가 클릭했는지</b></div>
+            <div class="guide-card-formula">CTR = 클릭 ÷ 노출 × 100</div>
+            <div class="guide-card-eg">1만 번 노출되고 100번 클릭됐으면 CTR = 1%</div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-label">CVR <span class="guide-card-tag">전환율</span></div>
+            <div class="guide-card-desc">클릭 중에 <b>몇 %가 구매했는지</b></div>
+            <div class="guide-card-formula">CVR = 전환 ÷ 클릭 × 100</div>
+            <div class="guide-card-eg">100명이 클릭하고 3명이 샀으면 CVR = 3%</div>
+          </div>
+
+          <div class="guide-card">
+            <div class="guide-card-label">ROAS <span class="guide-card-tag">광고수익률</span></div>
+            <div class="guide-card-desc">광고비 <b>1원당 매출이 얼마</b>인지</div>
+            <div class="guide-card-formula">ROAS = 매출 ÷ 광고비 × 100</div>
+            <div class="guide-card-eg">광고비 10만원 써서 100만원 매출 = ROAS 1,000%</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 섹션 2: 매체별 특징 -->
+      <section class="guide-section">
+        <div class="guide-section-num">02</div>
+        <h2 class="guide-h2">매체별 특징</h2>
+        <p class="guide-p">LEVAR에서 운영 중인 매체들이 어떤 차이가 있는지 알아보세요.</p>
+
+        <div class="guide-media-cards">
+          <div class="guide-media-card" style="border-left-color: var(--media-meta);">
+            <div class="guide-media-head">
+              <span class="guide-media-dot" style="background:var(--media-meta);"></span>
+              <span class="guide-media-name">메타 (자사몰)</span>
+            </div>
+            <div class="guide-media-desc">인스타그램·페이스북 광고. 자사몰로 바로 보내는 구매 전환 광고예요.</div>
+            <div class="guide-media-row"><span>전환 인정 기간</span><b>클릭 후 7일 / 본 후 1일</b></div>
+            <div class="guide-media-row"><span>장점</span><b>타겟팅 정교함</b></div>
+            <div class="guide-media-row"><span>단점</span><b>iOS 추적 제한 영향 받음</b></div>
+            <div class="guide-media-row"><span>광고비 기준</span><b>확인 예정</b></div>
+          </div>
+
+          <div class="guide-media-card" style="border-left-color: var(--media-29CM);">
+            <div class="guide-media-head">
+              <span class="guide-media-dot" style="background:var(--media-29CM);"></span>
+              <span class="guide-media-name">29CM</span>
+            </div>
+            <div class="guide-media-desc">29CM 입점 채널 광고. 29CM 자체 트래픽이라 구매 의도가 높은 유저가 많아요.</div>
+            <div class="guide-media-row"><span>성장솔루션</span><b>29CM 내부 광고 상품</b></div>
+            <div class="guide-media-row"><span>메타광고</span><b>메타에서 돌리는 29CM 유입 광고</b></div>
+            <div class="guide-media-row"><span>전환 인정 기간</span><b>클릭 후 7일</b></div>
+            <div class="guide-media-row"><span>광고비 기준</span><b>VAT 미포함 (부정클릭 제외)</b></div>
+          </div>
+
+          <div class="guide-media-card" style="border-left-color: var(--media-musinsa);">
+            <div class="guide-media-head">
+              <span class="guide-media-dot" style="background:var(--media-musinsa);"></span>
+              <span class="guide-media-name">무신사</span>
+            </div>
+            <div class="guide-media-desc">무신사 입점 채널 광고. MZ 세대 패션 카테고리 강세 플랫폼이에요.</div>
+            <div class="guide-media-row"><span>성장솔루션</span><b>무신사 내부 광고 상품</b></div>
+            <div class="guide-media-row"><span>메타광고</span><b>메타에서 돌리는 무신사 유입 광고</b></div>
+            <div class="guide-media-row"><span>전환 인정 기간</span><b>클릭 후 7일</b></div>
+            <div class="guide-media-row"><span>광고비 기준</span><b>VAT 미포함 (부정클릭 제외)</b></div>
+          </div>
+
+          <div class="guide-media-card" style="border-left-color: var(--media-naver);">
+            <div class="guide-media-head">
+              <span class="guide-media-dot" style="background:var(--media-naver);"></span>
+              <span class="guide-media-name">네이버</span>
+            </div>
+            <div class="guide-media-desc">네이버 검색광고. 사람들이 직접 검색해서 들어오니까 구매 의도가 매우 높아요.</div>
+            <div class="guide-media-row"><span>브랜드검색</span><b>"르바" 검색 시 상단 노출 (정액제)</b></div>
+            <div class="guide-media-row"><span>쇼핑검색 / 사이트노출</span><b>네이버 쇼핑·일반 검색 결과 노출 (종량제)</b></div>
+            <div class="guide-media-row"><span>파워링크</span><b>일반 검색어 결과 상단 노출 (종량제)</b></div>
+            <div class="guide-media-row"><span>전환 인정 기간</span><b>클릭 후 20일 (메타보다 훨씬 길어요)</b></div>
+            <div class="guide-media-row"><span>광고비 기준</span><b>VAT 포함</b></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 섹션 3: 전환이 잡히는 원리 -->
+      <section class="guide-section">
+        <div class="guide-section-num">03</div>
+        <h2 class="guide-h2">"전환"이 잡히는 원리</h2>
+        <p class="guide-p">광고 클릭하고 며칠 뒤에 구매해도 전환으로 잡혀요. 그런데 매체마다 기간이 달라요.</p>
+
+        <div class="guide-scenario">
+          <div class="guide-scenario-title">시나리오: 3일 전 광고 클릭 → 오늘 구매</div>
+          <div class="guide-scenario-row">
+            <div class="guide-scenario-day">
+              <div class="guide-scenario-date">3일 전</div>
+              <div class="guide-scenario-event">📱 메타 광고 클릭</div>
+            </div>
+            <div class="guide-arrow">→</div>
+            <div class="guide-scenario-day">
+              <div class="guide-scenario-date">오늘</div>
+              <div class="guide-scenario-event">🛒 자사몰에서 구매</div>
+            </div>
+          </div>
+          <div class="guide-scenario-result">
+            <b>결과:</b> 메타 광고 전환으로 카운트 ✅ (7일 이내라서)
+            <br/>광고비는 <b>3일 전</b>에 차감됐고, 매출과 전환은 <b>오늘</b> 잡혀요.
+          </div>
+        </div>
+
+        <div class="guide-warning">
+          <div class="guide-warning-title">⚠️ 매체 간 비교할 때 주의!</div>
+          <div class="guide-warning-body">
+            <b>네이버 CVR이 메타 CVR보다 높다고 해서 무조건 네이버가 좋은 건 아니에요.</b><br/>
+            네이버는 전환 인정 기간이 <b>20일</b>로 메타(7일)보다 훨씬 길어요. 그래서 더 천천히 산 사람도 카운트되니까 자연스럽게 CVR이 높게 나올 수밖에 없어요. 매체 간 비교는 참고용으로만 보세요.
+          </div>
+        </div>
+
+        <div class="guide-warning">
+          <div class="guide-warning-title">⚠️ 매체별 매출 합 ≠ 실제 매출</div>
+          <div class="guide-warning-body">
+            한 사람이 <b>메타와 네이버 둘 다 클릭</b>하고 구매했다면, 두 매체 모두 자기 공로로 잡아요. 그래서 매체별 매출을 다 더하면 실제 매출보다 클 수 있어요. 이건 정상이에요.
+          </div>
+        </div>
+
+        <div class="guide-warning">
+          <div class="guide-warning-title">⚠️ 매체별 광고비 기준 (VAT)</div>
+          <div class="guide-warning-body">
+            매체마다 광고비 보고 기준이 달라요. LEVAR 시트 입력값 기준:<br/>
+            <b>29CM/무신사 성장솔루션:</b> VAT 미포함<br/>
+            <b>네이버:</b> VAT 포함 (비즈머니 소진액 기준)<br/>
+            <b>메타:</b> 확인 예정<br/>
+            기준이 다르면 ROAS 비교 시 차이가 생길 수 있어요. 같은 매출일 때 VAT 포함 광고비 매체(네이버)는 ROAS가 약 9% 낮게 계산돼요.
+          </div>
+        </div>
+
+        <div class="guide-tip" style="margin-top: 10px;">
+          <b>💡 VAT 자동 보정 기능</b><br/>
+          사이드바 하단의 <b>"VAT 보정"</b> 토글이 켜져 있으면 (기본값) 네이버 광고비를 자동으로 VAT 미포함 금액으로 보정해서 표시해요. 다른 매체와 공정한 비교가 가능하도록요. 시트 원본 데이터는 그대로 유지되고, 화면에 보이는 숫자만 바뀌어요. 비즈머니 소진액 그대로 보고 싶으면 토글을 끄면 돼요.
+        </div>
+
+        <div class="guide-warning">
+          <div class="guide-warning-title">💡 네이버 브랜드검색 광고비는 정액제</div>
+          <div class="guide-warning-body">
+            브랜드검색은 매일 일정 금액으로 운영되는 <b>정액제 상품</b>이에요. 사이트노출·쇼핑검색·파워링크처럼 클릭당 과금되는 종량제와 달라요. 그래서 일자별 클릭이 적어도 광고비는 같게 표시돼요.
+          </div>
+        </div>
+      </section>
+
+      <!-- 섹션 4: 변화율 해석 -->
+      <section class="guide-section">
+        <div class="guide-section-num">04</div>
+        <h2 class="guide-h2">변화율 읽는 법</h2>
+        <p class="guide-p">KPI 카드 아래 "▼ 2.52p", "▲ 7.8%" 같은 숫자가 뭘 의미하는지 알려드릴게요.</p>
+
+        <div class="guide-compare">
+          <div class="guide-compare-card">
+            <div class="guide-compare-label">금액·횟수 지표</div>
+            <div class="guide-compare-target">매출, 광고비, 노출, 클릭, 전환수</div>
+            <div class="guide-compare-unit"><b>% (퍼센트)</b>로 표시</div>
+            <div class="guide-compare-eg">예: ▼ 55.4% = 지난 기간보다 매출이 55.4% 줄었어요</div>
+          </div>
+
+          <div class="guide-compare-card">
+            <div class="guide-compare-label">비율 지표</div>
+            <div class="guide-compare-target">CTR, CVR, ROAS</div>
+            <div class="guide-compare-unit"><b>p (퍼센티지 포인트)</b>로 표시</div>
+            <div class="guide-compare-eg">예: ▼ 2.52p = CTR이 6.22%에서 3.70%로 떨어졌어요 (차이 2.52)</div>
+          </div>
+        </div>
+
+        <div class="guide-tip">
+          <b>왜 다르게 표시할까요?</b><br/>
+          CTR이 6%에서 3%로 떨어진 걸 "50% 감소"라고 하면 헷갈리거든요. "3%p 감소"라고 해야 정확해요. 비율 지표는 절대 차이로 보는 게 표준이에요.
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbwlYNKXm6Gd6pt77W2Xibe_dP1HmMAfsF1bX_ebMjUY0EfufPEEvoFZEvL4nvQt_wpN5Q/exec';
 const PASSWORD = 'levar01';
@@ -608,6 +908,28 @@ function getMediaColors() {
 const MEDIA_ORDER = ['29CM', '메타', '무신사', '네이버'];
 
 let allData = [];
+
+// ============ VAT 보정 ============
+// 네이버 광고비는 시트에 VAT 포함 금액으로 저장되어 있어, 다른 매체(VAT 미포함)와 비교 시
+// ROAS가 부당하게 낮게 보임. 대시보드에서만 자동으로 VAT 제외 금액으로 보정 표시.
+const VAT_RATE = 0.1; // 부가가치세 10%
+let vatNormalize = (localStorage.getItem('levar_vat_normalize') ?? 'on') === 'on';
+
+function applyVatNormalization(rows) {
+  if (!vatNormalize) return rows;
+  return rows.map(r => {
+    if (r.media === '네이버' && r.spend > 0) {
+      const adjustedSpend = r.spend / (1 + VAT_RATE);
+      return {
+        ...r,
+        spend: adjustedSpend,
+        // ROAS는 매출/광고비로 재계산
+        roas: r.sales > 0 ? (r.sales / adjustedSpend) * 100 : 0
+      };
+    }
+    return r;
+  });
+}
 let currentMedia = 'all';
 let currentDiv = 'all';
 let currentRange = 'all';
@@ -642,34 +964,103 @@ function unlock() {
   fetchData();
 }
 
+// ============ 로컬 캐시 ============
+// Stale-While-Revalidate 패턴: 캐시 즉시 표시 → 백그라운드에서 최신 데이터 갱신
+const CACHE_KEY = 'levar_dashboard_cache_v1';
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간 (오래된 캐시는 안 씀)
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (!cached.savedAt || Date.now() - cached.savedAt > CACHE_TTL) return null;
+    return cached;
+  } catch (e) { return null; }
+}
+
+function saveCache(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      rows: data.rows || [],
+      updatedAt: data.updatedAt
+    }));
+  } catch (e) { /* 용량 초과 등 무시 */ }
+}
+
 async function fetchData() {
+  // 1. 캐시가 있으면 즉시 표시
+  const cached = loadCache();
+  if (cached && cached.rows.length > 0) {
+    allData = cached.rows;
+    document.getElementById('sidebarInfo').innerHTML =
+      `업데이트<br>${formatDateTime(cached.updatedAt)}<br><br>총 ${allData.length.toLocaleString()}건 <span style="opacity:0.5;">(캐시)</span>`;
+    loading.style.display = 'none';
+    layout.classList.add('active');
+    render();
+  }
+
+  // 2. 백그라운드에서 최신 데이터 가져오기
   try {
     const url = `${API_URL}?action=getData&pwd=${PASSWORD}`;
     const res = await fetch(url);
     const json = await res.json();
     if (!json.ok) throw new Error(json.error || '데이터 로딩 실패');
-    allData = json.data.rows || [];
-    document.getElementById('sidebarInfo').innerHTML =
-      `업데이트<br>${formatDateTime(json.data.updatedAt)}<br><br>총 ${allData.length.toLocaleString()}건`;
-    loading.style.display = 'none';
-    layout.classList.add('active');
-    render();
+    const newRows = json.data.rows || [];
+
+    // 데이터가 같으면 갱신 생략 (불필요한 리렌더 방지)
+    const isSame = cached && cached.updatedAt === json.data.updatedAt;
+    if (!isSame) {
+      allData = newRows;
+      saveCache(json.data);
+      document.getElementById('sidebarInfo').innerHTML =
+        `업데이트<br>${formatDateTime(json.data.updatedAt)}<br><br>총 ${allData.length.toLocaleString()}건`;
+      if (!cached) {
+        // 첫 로딩 (캐시 없었음) → 로딩 화면 닫기
+        loading.style.display = 'none';
+        layout.classList.add('active');
+      }
+      render();
+    } else {
+      // 데이터 동일 → 라벨만 캐시 표시 제거
+      document.getElementById('sidebarInfo').innerHTML =
+        `업데이트<br>${formatDateTime(json.data.updatedAt)}<br><br>총 ${allData.length.toLocaleString()}건`;
+    }
   } catch (err) {
-    loading.innerHTML = `<div class="loading-text" style="color:#A85048;">에러: ${err.message}</div>`;
+    // 캐시가 있으면 백그라운드 실패해도 OK (이미 표시되어 있음)
+    if (!cached) {
+      loading.innerHTML = `<div class="loading-text" style="color:#A85048;">에러: ${err.message}</div>`;
+    }
   }
+}
+
+function matchesSubFilter(r) {
+  if (currentDiv === 'all') return true;
+  if (currentDiv.startsWith('cam:')) {
+    // 네이버 캠페인명 기반 필터 (브랜드검색/쇼핑검색/파워링크)
+    // getNaverKind와 동일한 로직 사용해서 일관성 유지
+    const keyword = currentDiv.slice(4);
+    return getNaverKind(r.campaign) === keyword;
+  }
+  return r.div === currentDiv;
 }
 
 function getFilteredData() {
   let data = allData;
   if (currentMedia !== 'all') data = data.filter(r => r.media === currentMedia);
-  if (currentDiv !== 'all') data = data.filter(r => r.div === currentDiv);
-  if (currentRange === 'all') return data;
-  const range = getDateRange(currentRange);
-  if (!range) return data;
-  return data.filter(r => {
-    const d = new Date(r.date); d.setHours(0, 0, 0, 0);
-    return d >= range.start && d <= range.end;
-  });
+  data = data.filter(matchesSubFilter);
+  if (currentRange !== 'all') {
+    const range = getDateRange(currentRange);
+    if (range) {
+      data = data.filter(r => {
+        const d = new Date(r.date); d.setHours(0, 0, 0, 0);
+        return d >= range.start && d <= range.end;
+      });
+    }
+  }
+  // VAT 보정 적용
+  return applyVatNormalization(data);
 }
 
 function getDateRange(rangeKey) {
@@ -691,17 +1082,19 @@ function getDateRange(rangeKey) {
 function getPreviousData() {
   let data = allData;
   if (currentMedia !== 'all') data = data.filter(r => r.media === currentMedia);
-  if (currentDiv !== 'all') data = data.filter(r => r.div === currentDiv);
+  data = data.filter(matchesSubFilter);
   if (currentRange === 'all') return [];
   const range = getDateRange(currentRange);
   if (!range) return [];
   const days = Math.round((range.end - range.start) / 86400000) + 1;
   const prevEnd = new Date(range.start); prevEnd.setDate(prevEnd.getDate() - 1);
   const prevStart = new Date(prevEnd); prevStart.setDate(prevStart.getDate() - days + 1);
-  return data.filter(r => {
+  const filtered = data.filter(r => {
     const d = new Date(r.date); d.setHours(0, 0, 0, 0);
     return d >= prevStart && d <= prevEnd;
   });
+  // VAT 보정 적용
+  return applyVatNormalization(filtered);
 }
 
 function aggregate(data) {
@@ -740,6 +1133,7 @@ function updateGreeting(data) {
     else if (currentDiv === '입점몰(메타)') divLabel = '메타광고';
     else if (currentDiv === '자사몰(메타)') divLabel = '자사몰';
     else if (currentDiv === '자사몰(네이버SA)') divLabel = '자사몰';
+    else if (currentDiv.startsWith('cam:')) divLabel = currentDiv.slice(4);
     mediaText = `${mediaText} · ${divLabel}`;
   }
   let rangeText = '전체 기간';
@@ -783,7 +1177,9 @@ function setChange(id, currVal, prevVal, hasComparison, unit, isReverse) {
   const diff = currVal - prevVal;
   const pct = (diff / prevVal) * 100;
   const isUp = diff > 0;
-  const isFlat = Math.abs(pct) < 1;
+  const isPointUnit = (unit === 'point' || unit === 'point_decimal');
+  // 비율 지표(CTR/CVR/ROAS)는 절대 차이로 평탄 판정, 그 외는 변화율로
+  const isFlat = isPointUnit ? Math.abs(diff) < 0.01 : Math.abs(pct) < 1;
   let goodDirection;
   if (isFlat) goodDirection = 'flat';
   else if (isReverse) goodDirection = isUp ? 'down' : 'up';
@@ -800,12 +1196,19 @@ function setChange(id, currVal, prevVal, hasComparison, unit, isReverse) {
       ? `<svg width="7" height="7" viewBox="0 0 8 8"><path d="M 4,1 L 7,6 L 1,6 Z" fill="${color}"/></svg>`
       : `<svg width="7" height="7" viewBox="0 0 8 8"><path d="M 4,7 L 7,2 L 1,2 Z" fill="${color}"/></svg>`;
   }
-  let absStr;
-  if (unit === 'currency') absStr = (diff >= 0 ? '+' : '-') + formatCurrencyShort(Math.abs(diff));
-  else if (unit === 'number') absStr = (diff >= 0 ? '+' : '') + Math.round(diff).toLocaleString();
-  else if (unit === 'point') absStr = (diff >= 0 ? '+' : '') + Math.round(diff) + 'p';
-  else if (unit === 'point_decimal') absStr = (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'p';
-  el.innerHTML = `<span class="kpi-pct ${goodDirection}">${arrow} ${Math.abs(pct).toFixed(1)}%</span><span class="kpi-abs">${absStr}</span><span class="kpi-vs">vs 지난기간</span>`;
+  // 비율 지표(CTR/CVR/ROAS): 퍼센티지 포인트(p)를 메인으로
+  // 그 외(매출/광고비/노출/클릭/전환): 상대 변화율(%)을 메인으로
+  if (isPointUnit) {
+    const pointStr = unit === 'point'
+      ? (diff >= 0 ? '+' : '') + Math.round(diff) + 'p'
+      : (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'p';
+    el.innerHTML = `<span class="kpi-pct ${goodDirection}">${arrow} ${pointStr}</span><span class="kpi-vs">vs 지난기간</span>`;
+  } else {
+    let absStr;
+    if (unit === 'currency') absStr = (diff >= 0 ? '+' : '-') + formatCurrencyShort(Math.abs(diff));
+    else if (unit === 'number') absStr = (diff >= 0 ? '+' : '') + Math.round(diff).toLocaleString();
+    el.innerHTML = `<span class="kpi-pct ${goodDirection}">${arrow} ${Math.abs(pct).toFixed(1)}%</span><span class="kpi-abs">${absStr}</span><span class="kpi-vs">vs 지난기간</span>`;
+  }
 }
 
 function renderSparklines(data) {
@@ -965,16 +1368,34 @@ function renderMediaBars(data) {
   });
 }
 
+function getNaverKind(campaign) {
+  // 공백, 특수문자 무시하고 매칭
+  const c = (campaign || '').replace(/[\s_"'#]+/g, '');
+  if (c.indexOf('브랜드검색') >= 0) return '브랜드검색';
+  if (c.indexOf('쇼핑검색') >= 0) return '쇼핑검색';
+  // 파워링크 관련: '파워링크' 또는 '사이트노출' (르바_사이트 노출 등)
+  if (c.indexOf('파워링크') >= 0 || c.indexOf('사이트노출') >= 0) return '파워링크';
+  // 매칭 안 되면 원본 캠페인명 그대로 (디버그용)
+  return campaign || '기타';
+}
+
 function renderDailyTable(data) {
   const tbody = document.getElementById('dailyTable');
-  // 매체 전체 모드 → 날짜+매체로 그룹 / 매체 선택 시 → 날짜+구분으로 그룹 (구분 차이 보이게)
+  // 매체 전체 모드 → 날짜+매체로 그룹
+  // 매체 선택 시 → 날짜+구분으로 그룹 (네이버는 캠페인 종류로)
   const groupBy = currentMedia === 'all' ? 'date_media' : 'date_div';
   const grouped = {};
   data.forEach(r => {
-    const key = groupBy === 'date_media'
-      ? `${r.date}|${r.media}`
-      : `${r.date}|${r.div}`;
-    if (!grouped[key]) grouped[key] = { date: r.date, media: r.media, div: r.div || '', spend: 0, sales: 0, conv: 0 };
+    let groupTag;
+    if (groupBy === 'date_media') {
+      groupTag = r.media;
+    } else if (r.media === '네이버') {
+      groupTag = getNaverKind(r.campaign);
+    } else {
+      groupTag = r.div;
+    }
+    const key = `${r.date}|${groupTag}`;
+    if (!grouped[key]) grouped[key] = { date: r.date, media: r.media, div: r.div || '', tag: groupTag, spend: 0, sales: 0, conv: 0 };
     grouped[key].spend += r.spend || 0;
     grouped[key].sales += r.sales || 0;
     grouped[key].conv += r.conv || 0;
@@ -986,10 +1407,12 @@ function renderDailyTable(data) {
     const roas = r.spend > 0 ? (r.sales / r.spend * 100) : 0;
     const tagClass = getTagClass(r.media);
     const dateStr = r.date.slice(5).replace('-', '.');
-    // 매체 표시: 전체 모드 → 매체명만, 필터 모드 → 구분만 (예: 성장솔루션 / 메타광고 / 자사몰)
+    // 매체 표시: 전체 모드 → 매체명만, 필터 모드 → 구분만 (네이버는 캠페인 종류)
     let mediaCell;
     if (currentMedia === 'all') {
       mediaCell = `<span class="media-tag ${tagClass}">${r.media}</span>`;
+    } else if (r.media === '네이버') {
+      mediaCell = `<span class="media-tag ${tagClass}">${r.tag}</span>`;
     } else {
       let divLabel = r.div || r.media;
       if (r.div === '입점몰(성장솔루션)') divLabel = '성장솔루션';
@@ -1027,7 +1450,14 @@ function renderCampaignTop(data) {
   let html = '';
   campaigns.forEach((c, i) => {
     const rank = String(i + 1).padStart(2, '0');
-    const meta = currentMedia !== 'all' ? extractDivLabel(c.div) : c.media;
+    let meta;
+    if (currentMedia === 'all') {
+      meta = c.media;
+    } else if (c.media === '네이버') {
+      meta = getNaverKind(c.campaign);
+    } else {
+      meta = extractDivLabel(c.div);
+    }
     html += `<div class="campaign-row"><span class="campaign-rank">${rank}</span><span class="campaign-name" title="${escapeHtml(c.campaign)}">${escapeHtml(c.campaign)}</span><span class="campaign-meta">${escapeHtml(meta)}</span><span class="campaign-roas">${formatNumber(c.roas, 0)}%</span></div>`;
   });
   container.innerHTML = html;
@@ -1100,6 +1530,76 @@ customCancelBtn.addEventListener('click', () => {
   }
 });
 
+// 매체별 하위 구분 정의
+const MEDIA_SUB_FILTERS = {
+  '29CM': [
+    { label: '전체', value: 'all' },
+    { label: '성장솔루션', value: '입점몰(성장솔루션)' },
+    { label: '메타광고', value: '입점몰(메타)' }
+  ],
+  '무신사': [
+    { label: '전체', value: 'all' },
+    { label: '성장솔루션', value: '입점몰(성장솔루션)' },
+    { label: '메타광고', value: '입점몰(메타)' }
+  ],
+  '네이버': [
+    { label: '전체', value: 'all' },
+    { label: '브랜드검색', value: 'cam:브랜드검색' },
+    { label: '쇼핑검색', value: 'cam:쇼핑검색' },
+    { label: '파워링크', value: 'cam:파워링크' }
+  ]
+};
+
+function renderMediaSubBar() {
+  const subBar = document.getElementById('mediaSubBar');
+  const subs = MEDIA_SUB_FILTERS[currentMedia];
+  if (!subs) {
+    subBar.style.display = 'none';
+    subBar.innerHTML = '';
+    return;
+  }
+  subBar.innerHTML = subs.map(s =>
+    `<button class="media-sub-pill${(currentDiv === s.value || (s.value === 'all' && currentDiv === 'all')) ? ' active' : ''}" data-sub="${s.value}">${s.label}</button>`
+  ).join('');
+  subBar.style.display = 'flex';
+  // 서브 핀 이벤트 바인딩
+  subBar.querySelectorAll('.media-sub-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      subBar.querySelectorAll('.media-sub-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentDiv = btn.dataset.sub;
+      // 사이드바 동기화
+      syncSidebarFromFilter();
+      render();
+    });
+  });
+}
+
+function syncSidebarFromFilter() {
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.sidebar-subitem').forEach(i => i.classList.remove('active'));
+  // 메인 그룹 매칭
+  const groupItem = document.querySelector(`.sidebar-item[data-filter^="${currentMedia}|"]`);
+  if (currentDiv === 'all') {
+    if (groupItem) groupItem.classList.add('active');
+  } else {
+    // 서브 아이템 매칭
+    const subItem = document.querySelector(`.sidebar-subitem[data-filter="${currentMedia}|${currentDiv}"]`);
+    if (subItem) {
+      subItem.classList.add('active');
+      // 부모 그룹 열기
+      const parent = subItem.closest('.sidebar-sub');
+      if (parent) {
+        parent.classList.add('open');
+        const toggleBtn = document.querySelector(`[data-toggle="${parent.id}"]`);
+        if (toggleBtn) toggleBtn.classList.add('open');
+      }
+    } else if (groupItem) {
+      groupItem.classList.add('active');
+    }
+  }
+}
+
 document.querySelectorAll('.media-pill').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.media-pill').forEach(b => b.classList.remove('active'));
@@ -1109,12 +1609,19 @@ document.querySelectorAll('.media-pill').forEach(btn => {
     // 사이드바 active 정리
     document.querySelectorAll('.sidebar-subitem').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.sidebar-item[data-filter]').forEach(i => i.classList.remove('active'));
+    // 사이드바 동기화 (매체에 해당하는 메뉴 active)
+    syncSidebarFromFilter();
+    // 서브 필터바 갱신
+    renderMediaSubBar();
     render();
   });
 });
 
 document.getElementById('refreshBtn').addEventListener('click', () => {
+  // 새로고침 버튼은 캐시 무시하고 최신 데이터 강제 갱신
+  try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
   loading.style.display = 'flex';
+  layout.classList.remove('active');
   fetchData();
 });
 
@@ -1185,6 +1692,8 @@ function applyMediaFilter(filterStr) {
   const targetPill = document.querySelector(`.media-pill[data-media="${currentMedia}"]`);
   if (targetPill) targetPill.classList.add('active');
   else document.querySelector(`.media-pill[data-media="all"]`)?.classList.add('active');
+  // 상단 서브 필터바 갱신
+  renderMediaSubBar();
   render();
 }
 
@@ -1227,6 +1736,43 @@ function formatDateShort(d) {
   return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
 }
 function escapeHtml(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ============ VAT 보정 토글 ============
+const vatToggle = document.getElementById('vatToggle');
+function syncVatToggle() {
+  if (vatToggle) vatToggle.setAttribute('aria-checked', vatNormalize ? 'true' : 'false');
+}
+syncVatToggle();
+if (vatToggle) {
+  vatToggle.addEventListener('click', () => {
+    vatNormalize = !vatNormalize;
+    localStorage.setItem('levar_vat_normalize', vatNormalize ? 'on' : 'off');
+    syncVatToggle();
+    if (allData.length > 0) render();
+  });
+}
+
+// ============ 광고 가이드 모달 ============
+const guideModal = document.getElementById('guideModal');
+const guideBtn = document.getElementById('guideBtn');
+const guideClose = document.getElementById('guideClose');
+const guideBackdrop = document.getElementById('guideBackdrop');
+
+function openGuide() {
+  guideModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeGuide() {
+  guideModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+if (guideBtn) guideBtn.addEventListener('click', openGuide);
+if (guideClose) guideClose.addEventListener('click', closeGuide);
+if (guideBackdrop) guideBackdrop.addEventListener('click', closeGuide);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && guideModal.classList.contains('open')) closeGuide();
+});
 </script>
 </body>
 </html>
